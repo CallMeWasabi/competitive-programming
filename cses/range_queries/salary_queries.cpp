@@ -1,61 +1,41 @@
-#include <bits/stdc++.h>
-#include <string>
+#include <algorithm>
+#include <ios>
+#include <map>
+#include <vector>
+#include <iostream>
 using namespace std;
 using ll = long long;
 
-// NOTE: may be using lazy propagation to avoid time limit
+const int N = 2e5+5;
+vector<int> tr;
 
-struct Interval {
-    ll left, right, cnt;
-
-    Interval() {}
-    Interval(ll l, ll r, ll c):
-        left(l), right(r), cnt(c) {}
-};
-
-Interval combine(Interval& l, Interval& r) {
-    return Interval(
-        min(l.left, r.left),
-        max(l.right, r.right),
-        l.cnt + r.cnt
-    );
-}
-
-vector<ll> in;
-vector<Interval> tr;
-
-// # [debug]
-string to_string(Interval& inter) {
-    return "{left={" + to_string(inter.left) + "}, right={" + to_string(inter.right) + "}, cnt={" + to_string(inter.cnt) + "}}";
-}
-
-void build(vector<ll>& in, int l, int r, int i) {
+void build(vector<int> const& in, int i, int l, int r) {
     if (r-l==1) {
-        tr[i]=Interval(in[l], in[l], 1);
+        tr[i]=in[l];
         return;
     }
     int m=(l+r)/2;
-    build(in, l, m, i<<1);
-    build(in, m, r, i<<1|1);
-    tr[i]=combine(tr[i<<1], tr[i<<1|1]);
+    build(in, i<<1, l, m);
+    build(in, i<<1|1, m, r);
+    tr[i]=tr[i<<1] + tr[i<<1|1];
 }
 
-int query(int a, int b, int i=1, int l=0, int r=in.size()) {
-    if (a<=tr[i].left && tr[i].right<=b) return tr[i].cnt;
-    if (tr[i].right<a || tr[i].left>b) return 0;
-    int m = (l+r)/2;
-    return query(a, b, i<<1, l, m) + query(a, b, i<<1|1, m, r);
+int query(int ql, int qr, int i, int l, int r) {
+    if (ql<=l && r<=qr) return tr[i];
+    else if (qr<=l || ql>=r) return 0;
+    int m=(l+r)/2;
+    return query(ql, qr, i<<1, l, m) + query(ql, qr, i<<1|1, m, r);
 }
 
-void update(int i, int v, int idx=1, int l=0, int r=in.size()) {
+void add(int ind, int v, int i, int l, int r) {
     if (r-l==1) {
-        tr[idx].left=tr[idx].right=in[i]=v;
+        tr[i]+=v;
         return;
     }
     int m=(l+r)/2;
-    if (i<m) update(i, v, idx<<1, l, m);
-    else update(i, v, idx<<1|1, m, r);
-    tr[idx]=combine(tr[idx<<1], tr[idx<<1|1]);
+    if (ind<m) add(ind, v, i<<1, l, m);
+    else add(ind, v, i<<1|1, m, r);
+    tr[i]=tr[i<<1]+tr[i<<1|1];
 }
 
 int main() {
@@ -64,23 +44,37 @@ int main() {
 
     int n, q;
     cin >> n >> q;
-    in.resize(n);
+    vector<int> v(n);
+    vector<int> cp;
+    vector<tuple<char, int, int>> ask(q);
+    cp.reserve(N*2);
+    for (auto &i: v) cin >> i, cp.push_back(i);
+    for (auto &[c, a, b]: ask) {
+        cin >> c >> a >> b;
+        if (c=='!') cp.push_back(b);
+    }
+
+    sort(cp.begin(), cp.end());
+    cp.erase(unique(cp.begin(), cp.end()), cp.end());
+    map<int, int> mp;
+    for (int i=0; i<cp.size(); i++) mp[cp[i]]=i;
+
+    vector<int> in(cp.size());
+    for (int i=0; i<v.size(); i++) in[mp[v[i]]]++;
+
     tr.resize(in.size()*4);
+    build(in, 1, 0, in.size());
 
-    for (auto &i: in) cin >> i;
-    build(in, 0, in.size(), 1);
-
-    char c;
-    while (q--) {
-        cin >> c;
+    for (auto &[c, a, b]: ask) {
         if (c=='!') {
-            ll k, x;
-            cin >> k >> x;
-            update(k-1, x);
+            int prev=v[a-1];
+            add(mp[prev], -1, 1, 0, in.size());
+            add(mp[b], 1, 1, 0, in.size());
+            v[a-1]=b;
         } else {
-            ll a ,b;
-            cin >> a >> b;
-            cout << query(a, b) << '\n';
+            int ql = lower_bound(cp.begin(), cp.end(), a) - cp.begin();
+            int qr = upper_bound(cp.begin(), cp.end(), b) - cp.begin();
+            cout << query(ql, qr, 1, 0, in.size()) << '\n';
         }
     }
 
