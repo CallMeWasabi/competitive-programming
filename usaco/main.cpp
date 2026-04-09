@@ -9,7 +9,7 @@ int main() {
     cin.tie(nullptr);
 
     freopen("bcount.in", "r", stdin);
-    freopen("bcount.out", "w", stdout);
+    freopen("bcount.out", "w",      stdout);
 
     int n, q;
     cin >> n >> q;
