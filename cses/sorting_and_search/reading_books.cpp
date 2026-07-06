@@ -1,6 +1,6 @@
 #include <iostream>
-#include <algorithm>
 #include <vector>
+#include <algorithm>
 using namespace std;
 using ll = long long;
 
@@ -9,14 +9,14 @@ int main() {
     cin.tie(nullptr);
 
     int n;
-    cin >> n;
     vector<ll> v(n);
     for (auto &i: v) cin >> i;
 
-    ll mx=*max_element(v.begin(), v.end())+1;
-    ll l=1, r=1e10;
-    while (l<r) {
-    }
+    sort(v.begin(), v.end());
+
+    ll t=0;
+    int i=0, j=v.size()-1;
+
 
     return 0;
 }
