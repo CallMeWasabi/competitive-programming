@@ -13,10 +13,13 @@ int main() {
     vector<ll> v(n);
     for (auto &i: v) cin >> i;
 
-    ll mx=*max_element(v.begin(), v.end())+1;
-    ll l=1, r=1e10;
-    while (l<r) {
-    }
+    sort(v.begin(), v.end());
+    ll m = v.size() / 2;
+    ll s = 0;
+
+    for (auto &i: v) s += abs(i - v[m]);
+
+    cout << s;
 
     return 0;
 }
