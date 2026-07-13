@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include "debugging.h"
 using namespace std;
 
 // easy segment tree implementation for finding sum query
@@ -31,9 +32,9 @@ void update(int i, int v, int l, int r, int idx=1) {
         return;
     }
     int m = (l + r) /2;
-    if (i < m) update(i, v, idx * 2, l, m);
-    else update(i, v, idx * 2 + 1, m, r);
-    tr[idx] = tr[idx * 2]+tr[idx * 2 + 1];
+    if (i < m) update(i, v, l, m, idx * 2);
+    else update(i, v, m, r, idx * 2 + 1);
+    tr[idx] = tr[idx * 2] + tr[idx * 2 + 1];
 }
 
 int main() {
@@ -45,8 +46,7 @@ int main() {
     build(in, 0, in.size(), 1);
 
 
-    for (auto &i: tr) cout << i << ' ';
-    cout << endl;
+    cout << tr << '\n';
     update(0, 7, 0, in.size());
-    for (auto &i: tr) cout << i << ' ';
+    cout << tr << '\n';
 }
