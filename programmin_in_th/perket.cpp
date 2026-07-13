@@ -9,19 +9,19 @@ int s=1, b=0, c=0;
 
 void solve(vector<pair<int, int>>& v, int i) {
     if (i==v.size()) {
-        if (c>0) MN = min(MN, abs(s-b));
+        if (c>0 && abs(s-b) < MN) MN = abs(s-b);
         return;
     }
 
     solve(v, i+1); // ไม่เลือก
 
-    s*=v[i].first; // เปรี้ยว
-    b+=v[i].second; // ขม
-    c++; // จำนวนที่เลือก
+    s *= v[i].first;
+    b += v[i].second;
+    c++;
     solve(v, i+1); // เลือก
     c--;
-    b-=v[i].second;
-    s/=v[i].first;
+    b -= v[i].second;
+    s /= v[i].first;
 }
 
 int main() {
