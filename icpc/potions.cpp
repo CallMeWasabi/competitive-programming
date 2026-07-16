@@ -2,7 +2,18 @@
 using namespace std;
 using ll = long long;
 
-ll h[2001][2], dp[2001][2];
+ll dp[2002][2002];
+
+ll solve(vector<ll>& v, int i, int c, ll h) {
+    if (i == v.size()) return h;
+    if (dp[i][c] != -1) return dp[i][c];
+
+    ll pick = -1;
+    if (h + v[i] >= 0) pick = solve(v, i+1, c+1, h+v[i]);
+
+    ll not_pick = solve(v, i+1, c, h);
+    return dp[i][c] = max(pick, not_pick);
+}
 
 int main() {
     ios_base::sync_with_stdio(0);
@@ -14,15 +25,13 @@ int main() {
     vector<ll> v(n);
     for (auto &i: v) cin >> i;
 
-    if (v[0] >= 0) {
-        h[0][0] = dp[0][0] = 0;
-        h[0][1] = v[0];
-        dp[0][1] = 1;
-    }
+    memset(dp, -1, sizeof(dp));
+    solve(v, 0, 0, 0);
 
-    for (int i=1; i<n; i++) {
-        h[i][0] = h[i-1][0];
-    }
+    ll mx=-1;
+    for (int i=0; i<=2000; i++) if (dp[n-1][i] != -1) mx=i+1;
+
+    cout << mx;
 
     return 0;
 }
