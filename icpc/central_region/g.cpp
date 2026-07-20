@@ -33,7 +33,7 @@ vector<bool> used(200005, false);
 ll solve(int v, int c) {
     if (tree[v].empty()) return 0;
 
-    used[v] = 1; 
+    used[v] = 1;
     ll s = 0;
     set<int> dist_color;
     for (auto &[nxt, nxt_c]: tree[v]) {
