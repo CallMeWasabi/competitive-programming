@@ -25,7 +25,7 @@ using namespace std;
 using ll = long long;
 using pii = pair<int, int>;
 using pll = pair<ll, ll>;
-using vii = vector<int>;
+using vi = vector<int>;
 
 vector<pii> tree[200005];
 vector<bool> used(200005, false);
