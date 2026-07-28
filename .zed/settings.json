@@ -1,0 +1,10 @@
+{
+  "lsp": {
+    "clangd": {
+      "arguments": [
+        "--query-driver=C:/Strawberry/c/bin/g++.exe",
+        "--header-insertion=never"
+      ]
+    }
+  }
+}

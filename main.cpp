@@ -1,121 +1,62 @@
-#include <iostream>
-#include <algorithm>
-#include <vector>
-#include <map>
-#include <unordered_map>
-#include <set>
-#include <unordered_set>
-#include <queue>
-#include <deque>
-#include <iterator>
-#include <stack>
-#include <utility>
-#include <iomanip>
-#include <string>
-#include <cstring>
-#include <cstdint>
-#include <cmath>
-#include <numeric>
-#include <array>
-#include <functional>
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
 
 #ifndef ONLINE_JUDGE
 #include "debugging.h"
 #endif
 
 using namespace std;
+using namespace __gnu_pbds;
+
+template <typename T>
+using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+
 using ll = long long;
 using pii = pair<int, int>;
 using pll = pair<ll, ll>;
 using vi = vector<int>;
 using vl = vector<ll>;
 
-template <typename E, typename R = E>
-class SegmentTree {
-public:
-    vector<E> tree, arr;
-    function<R(E, E)> combine;
-    function<R()> identity;
-
-    SegmentTree(
-        vector<E>& ref,
-        function<R(E, E)> c_func,
-        function<R()> i_func = []() { return R();}
-    ): combine(c_func), identity(i_func) {
-        int sz = ref.size();
-        arr.resize(sz, E());
-        tree.resize(4 * sz, E());
-
-        copy(ref.begin(), ref.end(), arr.begin());
-        for (int i=0; i<sz; i++) update(i, ref[i], 0, sz, 1);
+struct custom_hash {
+    static uint64_t splitmix64(uint64_t x) {
+        // http://xorshift.di.unimi.it/splitmix64.c
+        x += 0x9e3779b97f4a7c15;
+        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+        x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+        return x ^ (x >> 31);
     }
 
-    void update(int idx, E v, int l, int r, int i) {
-        if (r-l == 1) {
-            tree[i] = arr[l] = v;
-            return;
-        }
-        int m = (l+r)/2;
-
-        if (idx < m) update(idx, v, l, m, i*2);
-        else update(idx, v, m, r, i*2+1);
-
-        tree[i] = combine(tree[i*2], tree[i*2+1]);
+    size_t operator()(uint64_t x) const {
+        static const uint64_t FIXED_RANDOM = chrono::steady_clock::now().time_since_epoch().count();
+        return splitmix64(x + FIXED_RANDOM);
     }
 
-    R query(int ql, int qr, int l, int r, int i) {
-        if (ql <= l && r <= qr) return tree[i];
-        if (qr <= l || ql >= r) return identity();
-        int m = (l+r)/2;
-        return combine(query(ql, qr, l, m, i*2), query(ql, qr, m, r, i*2+1));
+    size_t operator()(string s) const {
+        static const uint64_t FIXED_RANDOM = chrono::steady_clock::now().time_since_epoch().count();
+        size_t cu = 0;
+        for (auto &c: s)  cu += (size_t)c;
+        return splitmix64(cu + FIXED_RANDOM);
     }
+
 };
+
+const ll md = 1e9 + 7;
 
 int main() {
     ios_base::sync_with_stdio(0);
     cin.tie(nullptr);
 
-    string s;
-    cin >> s;
+    gp_hash_table<string, ll, custom_hash> table;
 
-    int sz = s.length();
-
-    vector<array<int, 26>> b(sz, array<int, 26>());
-    b.reserve(sz);
-    for (int i=0; i<sz; i++) b[i].fill(0), b[i][s[i]-'a']++;
-
-    SegmentTree<array<int, 26>> seg = SegmentTree<array<int, 26>>(
-        b,
-        [](array<int, 26> a, array<int, 26> b) {
-            array<int, 26> c = { 0 };
-            for (int i=0; i<26; i++) c[i] = a[i] + b[i];
-            return c;
-        },
-        []() {
-            array<int, 26> c = { 0 };
-            return c;
-        }
-    );
-
-    int m;
-    cin >> m;
-    while (m--) {
-        int t, x;
-        cin >> t >> x;
-        if (t == 1) {
-            char y;
-            cin >> y;
-            array<int, 26> arr = { 0 };
-            arr[y - 'a']++;
-            seg.update(x-1, arr, 0, sz, 1);
-        } else {
-            int y;
-            cin >> y;
-            auto k = seg.query(x-1, y, 0, sz, 1);
-            int cnt = 0;
-            for (int i=0; i<26; i++) if (k[i] > 0) cnt++;
-            cout << cnt << '\n';
-        }
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        int k = ++table[s];
+        if (k > 1) cout << s << k-1 << '\n';
+        else cout << "OK\n";
     }
 
     return 0;
