@@ -67,7 +67,7 @@ struct ST {
 
         push(l, r, i);
         int m = (l+r)/2;
-        
+
         range_add(ql, qr, v, l, m, i * 2);
         range_add(ql, qr, v, m, r, i * 2 + 1);
 
