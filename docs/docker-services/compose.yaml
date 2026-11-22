@@ -1,0 +1,59 @@
+# Backing services for local dev — start only what you need, e.g.:
+#   docker compose --profile pg up -d
+#   docker compose --profile pg --profile redis up -d
+#   docker compose --profile all down        (stop everything; data stays in volumes)
+#   docker compose --profile all down -v     (stop + DELETE all data)
+#
+# Default dev credentials only — never reuse for anything real.
+
+services:
+  postgres:
+    image: postgres:18
+    profiles: [pg, all]
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: dev
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql]   # PG18+ image mounts the parent dir
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:8
+    profiles: [redis, all]
+    ports: ["6379:6379"]
+    volumes: [redisdata:/data]
+
+  mongo:
+    image: mongo:8
+    profiles: [mongo, all]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dev
+      MONGO_INITDB_ROOT_PASSWORD: dev
+    ports: ["27017:27017"]
+    volumes: [mongodata:/data/db]
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    profiles: [mq, all]
+    environment:
+      RABBITMQ_DEFAULT_USER: dev
+      RABBITMQ_DEFAULT_PASS: dev
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # web UI -> http://localhost:15672
+    volumes: [rabbitdata:/var/lib/rabbitmq]
+
+  kafka:
+    image: apache/kafka:4.1.0   # single-node KRaft, no ZooKeeper needed
+    profiles: [kafka, all]
+    ports: ["9092:9092"]
+
+volumes:
+  pgdata:
+  redisdata:
+  mongodata:
+  rabbitdata:
