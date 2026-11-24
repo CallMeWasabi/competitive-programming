@@ -1,9 +1,13 @@
-#include <functional>
-#include <iostream>
-#include <algorithm>
-#include <vector>
+
+#include <bits/stdc++.h>
+
+#ifndef ONLINE_JUDGE
+#include "debugging.h"
+#endif
+
 using namespace std;
 using ll = long long;
+using int128 = __int128;
 
 int main() {
     ios_base::sync_with_stdio(0);
@@ -11,24 +15,22 @@ int main() {
 
     ll n, x;
     cin >> n >> x;
+
     vector<ll> v(n);
     for (auto &i: v) cin >> i;
-    sort(v.begin(), v.end(), greater<>());
-    int i=0, c=0;
-    ll b=0, k=0;
-    while (i<v.size()) {
-        if (b+v[i]<x) {
-            b+=v[i];
-            if (++k==2) {
-                c++, b=0, k=0;
-            }
-        } else if (b+v[i]==x) {
-            c++, b=0, k=0;
-        } else if (k>0) {
-            c++, b=v[i], k=1;
+    sort(v.begin(), v.end());
+
+    ll cnt = 0;
+    int i = 0, j = n-1;
+    for (; i<=j;) {
+        if (i == j) {
+            i++, cnt++;
+        } else if (v[i] + v[j] <= x) {
+            i++, j--, cnt++;
+        } else {
+            j--, cnt++;
         }
-        i++;
     }
-    if (k>0) c++;
-    cout << c;
+
+    cout << cnt;
 }

@@ -8,7 +8,7 @@ void solve(int n) {
     ll l=1, r=INT32_MAX;
     while (l<r) {
         ll m=(l+r)/2;
-        if (log(n)/log(m))
+        // if (log(n)/log(m))
     }
 }
 
