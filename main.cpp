@@ -1,4 +1,3 @@
-#include <bits/stdc++.h>
 
 #ifndef ONLINE_JUDGE
 #include "debugging.h"
