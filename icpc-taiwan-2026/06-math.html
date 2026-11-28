@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math and Number Theory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="06-math.html">
+<main>
+  <div class="kicker">บทที่ 06</div>
+  <h1>Math & Number Theory</h1>
+  <p class="lead">ข้อคณิตใน ICPC มักไม่ยากที่ algorithm แต่ยากที่<b>การสังเกตสูตร</b> ให้ลองคำนวณคำตอบของ n เล็กๆ ด้วย brute force แล้วหา pattern — และมีชุดเครื่องมือด้านล่างพร้อมใช้ทันที</p>
+  <div class="page-progress" id="page-progress"></div>
+
+  <nav class="toc"><b>ในหน้านี้</b><ol>
+    <li><a href="#mod">Modular arithmetic</a></li>
+    <li><a href="#gcd">GCD & extended Euclid</a></li>
+    <li><a href="#prime">Primes, sieve, divisors</a></li>
+    <li><a href="#comb">Combinatorics</a></li>
+    <li><a href="#ie">Inclusion–exclusion</a></li>
+    <li><a href="#matrix">Matrix exponentiation</a></li>
+    <li><a href="#prob">Probability & expected value</a></li>
+    <li><a href="#game">Game theory</a></li>
+    <li><a href="#practice">แบบฝึกหัด</a></li>
+  </ol></nav>
+
+  <h2 id="mod">1. Modular arithmetic</h2>
+  <ul>
+    <li>บวก ลบ คูณ: mod หลังทุก operation · ลบ: <code>((a - b) % M + M) % M</code> เพราะ <code>%</code> ของ C++ ให้ค่าลบได้</li>
+    <li>หาร: คูณด้วย inverse — <code>a / b ≡ a · b<sup>M−2</sup></code> (mod M) เมื่อ M เป็นจำนวนเฉพาะ และ b ไม่หารด้วย M</li>
+    <li>คูณ <code>ll</code> สองตัวที่ &lt; 10<sup>18</sup> mod ใหญ่: ใช้ <code>(__int128)a * b % M</code></li>
+    <li>เลขชี้กำลังใหญ่: a<sup>e</sup> ≡ a<sup>e mod (M−1)</sup> (mod M) เมื่อ M เป็นจำนวนเฉพาะและ a ไม่หารด้วย M (Fermat) — Exponentiation II</li>
+  </ul>
+<pre><code>const ll MOD = 1e9 + 7;
+ll power(ll b, ll e, ll m = MOD) {
+    ll r = 1; b %= m;
+    while (e &gt; 0) {
+        if (e &amp; 1) r = r * b % m;
+        b = b * b % m; e &gt;&gt;= 1;
+    }
+    return r;
+}
+ll inv(ll a) { return power(a, MOD - 2); }      // MOD ต้องเป็นจำนวนเฉพาะ</code></pre>
+
+  <h2 id="gcd">2. GCD & extended Euclid</h2>
+<pre><code>// std::gcd, std::lcm มีใน C++17 (&lt;numeric&gt;) — lcm อาจ overflow: a / gcd(a,b) * b
+// ext_gcd: หา x, y ที่ a·x + b·y = g = gcd(a, b)
+ll ext_gcd(ll a, ll b, ll &amp;x, ll &amp;y) {
+    if (b == 0) { x = 1; y = 0; return a; }
+    ll x1, y1, g = ext_gcd(b, a % b, x1, y1);
+    x = y1; y = x1 - (a / b) * y1;
+    return g;
+}
+// inverse ของ a mod m (m ไม่ต้องเป็นจำนวนเฉพาะ แต่ gcd(a,m) ต้อง = 1):
+// ext_gcd(a, m, x, y); inv = (x % m + m) % m
+// a·x + b·y = c มีคำตอบจำนวนเต็ม ⇔ gcd(a,b) | c</code></pre>
+  <p><b>CRT</b> (ระบบ x ≡ a<sub>i</sub> mod m<sub>i</sub>): รวมทีละสองสมการด้วย ext_gcd — รายละเอียดและโจทย์อยู่ใน <code>docs/advance_cp_topic.md</code> หัวข้อ 1</p>
+
+  <h2 id="prime">3. Primes, sieve, divisors</h2>
+<pre><code>// Sieve เก็บ smallest prime factor: แยกตัวประกอบเลข ≤ N ได้ใน O(log x)
+const int N = 1e6 + 1;
+vector&lt;int&gt; spf(N, 0), primes;
+for (int i = 2; i &lt; N; i++) {
+    if (spf[i] == 0) { spf[i] = i; primes.push_back(i); }
+    for (int p : primes) {
+        if (p &gt; spf[i] || (ll)i * p &gt;= N) break;
+        spf[i * p] = p;                          // linear sieve: แต่ละตัวถูกตั้งค่าครั้งเดียว
+    }
+}
+// แยกตัวประกอบ x ≤ N
+while (x &gt; 1) { int p = spf[x]; int c = 0; while (x % p == 0) x /= p, c++; /* p^c */ }
+
+// แยกตัวประกอบ x ≤ 10^12 แบบ trial division O(√x)
+for (ll p = 2; p * p &lt;= x; p++) while (x % p == 0) { fac.push_back(p); x /= p; }
+if (x &gt; 1) fac.push_back(x);</code></pre>
+  <ul>
+    <li>ถ้า n = ∏ p<sub>i</sub><sup>e<sub>i</sub></sup>: จำนวนตัวหาร = ∏(e<sub>i</sub>+1), ผลรวมตัวหาร = ∏(p<sub>i</sub><sup>e<sub>i</sub>+1</sup>−1)/(p<sub>i</sub>−1)</li>
+    <li>φ(n) = n ∏(1 − 1/p) — จำนวนเลขใน [1, n] ที่ coprime กับ n</li>
+    <li>นับตัวหารของทุกเลข ≤ N: วน d แล้ววนพหุคูณของ d → O(N log N) (harmonic series เป็นเทคนิคที่ใช้บ่อยมาก)</li>
+    <li>⌊n/i⌋ มีค่าต่างกันแค่ O(√n) ค่า — รวมกลุ่ม i ที่ให้ค่าเดียวกัน: <code>for (l = 1; l &lt;= n; l = r + 1) { r = n / (n / l); ... }</code></li>
+  </ul>
+
+  <h2 id="comb">4. Combinatorics</h2>
+<pre><code>const int MX = 2e6 + 5;
+ll fact[MX], ifact[MX];
+void init() {
+    fact[0] = 1;
+    for (int i = 1; i &lt; MX; i++) fact[i] = fact[i-1] * i % MOD;
+    ifact[MX-1] = power(fact[MX-1], MOD - 2);
+    for (int i = MX - 1; i &gt; 0; i--) ifact[i-1] = ifact[i] * i % MOD;
+}
+ll C(int n, int k) {
+    if (k &lt; 0 || k &gt; n) return 0;
+    return fact[n] * ifact[k] % MOD * ifact[n-k] % MOD;
+}</code></pre>
+  <div class="table-wrap"><table>
+    <tr><th>สูตร</th><th>นับอะไร</th></tr>
+    <tr><td>C(n+k−1, k−1)</td><td>Stars and bars: แจก n ชิ้นเหมือนกันให้ k คน (ได้ 0 ได้)</td></tr>
+    <tr><td>n! / (c<sub>1</sub>!·c<sub>2</sub>!·…)</td><td>เรียงสตริงที่มีตัวอักษรซ้ำ</td></tr>
+    <tr><td>Catalan C(2n,n)/(n+1)</td><td>วงเล็บถูกต้อง, binary tree, เส้นทางไม่ข้ามเส้นทแยง</td></tr>
+    <tr><td>D(n) = (n−1)(D(n−1)+D(n−2))</td><td>Derangement — ไม่มีใครได้ของตัวเอง</td></tr>
+    <tr><td>C(n,k) = C(n−1,k−1)+C(n−1,k)</td><td>Pascal — ใช้เมื่อ n ≤ 5000 หรือ mod ไม่ใช่จำนวนเฉพาะ</td></tr>
+  </table></div>
+
+  <h2 id="ie">5. Inclusion–exclusion</h2>
+<pre><code>// นับเลขใน [1, n] ที่หารด้วย a_i อย่างน้อยหนึ่งตัว (k ≤ 20)
+ll total = 0;
+for (int mask = 1; mask &lt; (1 &lt;&lt; k); mask++) {
+    ll prod = 1; bool over = false;
+    for (int i = 0; i &lt; k; i++) if (mask &gt;&gt; i &amp; 1) {
+        if (prod &gt; n / a[i]) { over = true; break; }   // กัน overflow
+        prod *= a[i];                                   // ถ้า a ไม่ coprime กัน ใช้ lcm
+    }
+    if (over) continue;
+    total += (__builtin_popcount(mask) &amp; 1 ? 1 : -1) * (n / prod);
+}</code></pre>
+  <p>Pattern "นับสิ่งที่ <b>ไม่</b> มีคุณสมบัติใดเลย" = ทั้งหมด − (inclusion–exclusion ของ "มีคุณสมบัติอย่างน้อยหนึ่ง") ใช้กับ coprime pairs (ร่วมกับ Möbius), นับ surjection, grid paths ที่เลี่ยงกับดัก</p>
+
+  <h2 id="matrix">6. Matrix exponentiation</h2>
+  <p>Linear recurrence ที่ n ถึง 10<sup>18</sup> (Fibonacci, จำนวนวิธีโยนลูกเต๋า, จำนวน path ยาว k ในกราฟ) → ยกกำลัง matrix ขนาด d×d ใน O(d<sup>3</sup> log n)</p>
+<pre><code>using Mat = vector&lt;vector&lt;ll&gt;&gt;;
+Mat mul(const Mat &amp;A, const Mat &amp;B) {
+    int n = A.size(), m = B[0].size(), k = B.size();
+    Mat C(n, vector&lt;ll&gt;(m, 0));
+    for (int i = 0; i &lt; n; i++) for (int t = 0; t &lt; k; t++) if (A[i][t])
+        for (int j = 0; j &lt; m; j++) C[i][j] = (C[i][j] + A[i][t] * B[t][j]) % MOD;
+    return C;
+}
+Mat mpow(Mat A, ll e) {
+    int n = A.size(); Mat R(n, vector&lt;ll&gt;(n, 0));
+    for (int i = 0; i &lt; n; i++) R[i][i] = 1;
+    for (; e; e &gt;&gt;= 1, A = mul(A, A)) if (e &amp; 1) R = mul(R, A);
+    return R;
+}
+// Fibonacci: [[1,1],[1,0]]^n → F(n) อยู่ที่ [0][1]
+// dice: f(n) = f(n-1)+...+f(n-6) → matrix 6x6 แถวแรกเป็น 1 ทั้งหมด, ใต้ diagonal เป็น 1
+// adjacency matrix ^ k → [i][j] = จำนวน walk ยาว k จาก i ไป j</code></pre>
+
+  <h2 id="prob">7. Probability & expected value</h2>
+  <ul>
+    <li><b>Linearity of expectation:</b> E[X+Y] = E[X]+E[Y] เสมอ แม้ X, Y ไม่อิสระ — แตกปัญหาเป็นผลรวมของ indicator "เหตุการณ์ i เกิดไหม" แล้วรวมความน่าจะเป็น</li>
+    <li>E[max] ของ n ค่า: ใช้ P(max ≤ k) = ∏ P(X<sub>i</sub> ≤ k) แล้ว E = Σ k·(P(max ≤ k) − P(max ≤ k−1))</li>
+    <li>DP ความน่าจะเป็น: <code>dp[i][s]</code> = ความน่าจะเป็นที่หลัง i ครั้งได้ผลรวม s</li>
+    <li>คำตอบ "เป็นเศษส่วน mod p": คำนวณ p·q<sup>−1</sup> mod M ตลอดทาง</li>
+    <li>พิมพ์ทศนิยม: อ่านกติกาการปัดให้ดี เช่น CSES Candy Lottery / Moving Robots ให้ปัดแบบ round half to even</li>
+  </ul>
+
+  <h2 id="game">8. Game theory</h2>
+  <ul>
+    <li><b>Win/lose positions:</b> สถานะแพ้ = ทุก move ไปสถานะชนะ, สถานะชนะ = มี move ไปสถานะแพ้ — DP/BFS ย้อนจากสถานะจบ</li>
+    <li><b>Nim:</b> ผู้เล่นแรกชนะ ⇔ XOR ของทุกกอง ≠ 0</li>
+    <li><b>Sprague–Grundy:</b> เกมที่เป็นผลรวมของเกมย่อยอิสระ → grundy(สถานะ) = mex ของ grundy สถานะถัดไป; ผลรวมเกม ชนะ ⇔ XOR ของ grundy ≠ 0</li>
+    <li>ถ้าหา pattern ไม่ได้: brute-force grundy ของ n เล็กๆ แล้วพิมพ์ดู — มักเป็นคาบ</li>
+  </ul>
+
+  <h2 id="practice">9. แบบฝึกหัด</h2>
+  <ul class="problems">
+    <li class="must"><a data-cses="1095">Exponentiation</a></li>
+    <li class="must"><a data-cses="1712">Exponentiation II</a><div class="meta">Fermat ลดเลขชี้กำลัง</div></li>
+    <li class="must"><a data-cses="1713">Counting Divisors</a></li>
+    <li><a data-cses="1081">Common Divisors</a><div class="meta">นับพหุคูณ (harmonic)</div></li>
+    <li class="hard"><a data-cses="1082">Sum of Divisors</a><div class="meta">⌊n/i⌋ blocks</div></li>
+    <li class="must"><a data-cses="1079">Binomial Coefficients</a><div class="meta">factorial + inverse</div></li>
+    <li><a data-cses="1715">Creating Strings II</a></li>
+    <li class="must"><a data-cses="1716">Distributing Apples</a><div class="meta">stars and bars</div></li>
+    <li><a data-cses="1717">Christmas Party</a><div class="meta">derangement</div></li>
+    <li><a data-cses="2064">Bracket Sequences I</a><div class="meta">Catalan</div></li>
+    <li class="must"><a data-cses="1722">Fibonacci Numbers</a><div class="meta">matrix power</div></li>
+    <li class="must"><a data-cses="1096">Throwing Dice</a><div class="meta">matrix 6×6</div></li>
+    <li><a data-cses="1723">Graph Paths I</a></li>
+    <li class="must"><a data-cses="2185">Prime Multiples</a><div class="meta">inclusion–exclusion + overflow</div></li>
+    <li class="hard"><a data-cses="2417">Counting Coprime Pairs</a></li>
+    <li class="must"><a data-cses="1725">Dice Probability</a><div class="meta">DP ความน่าจะเป็น</div></li>
+    <li><a data-cses="1727">Candy Lottery</a><div class="meta">E[max]</div></li>
+    <li class="hard"><a data-cses="1726">Moving Robots</a><div class="meta">linearity of expectation</div></li>
+    <li class="must"><a data-cses="1730">Nim Game I</a></li>
+    <li><a data-cses="1729">Stick Game</a><div class="meta">win/lose DP</div></li>
+    <li class="hard"><a data-cses="2207">Grundy's Game</a><div class="meta">grundy + สังเกต pattern</div></li>
+    <li><a data-cf="687/B">Remainders Game</a><div class="meta">CRT/lcm reasoning</div></li>
+  </ul>
+  <div class="box exit"><span class="label">ผ่านบทนี้เมื่อ</span>มี power/inverse/nCr/sieve/matrix power ที่ผ่าน AC ใน notebook, เห็น "mod 10<sup>9</sup>+7" แล้วไม่กลัวการหาร และหา pattern จาก brute force ของ n เล็กเป็นนิสัย</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

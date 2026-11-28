@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ICPC Taiwan Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="index.html">
+<main>
+  <div class="kicker">ICPC Asia Taiwan Regional 2026</div>
+  <h1>Roadmap: จาก "รู้จัก algorithm" ถึง "พร้อมลงสนาม ICPC"</h1>
+  <p class="lead">ชุดบทเรียน 9 หน้า เรียงตามลำดับที่ควรเรียน แต่ละหน้ามีคำอธิบาย, โค้ด C++ ที่เอาไปใส่ team notebook ได้, ข้อควรระวัง และรายการโจทย์ที่ติ๊กเก็บความคืบหน้าได้ (บันทึกในเบราว์เซอร์นี้)</p>
+
+  <div class="page-progress" id="overall-progress"></div>
+
+  <h2>ICPC Regional ต่างจากการแข่งที่เคยทำยังไง</h2>
+  <div class="table-wrap"><table>
+    <tr><th>เรื่อง</th><th>รายละเอียด</th><th>ผลต่อการเตรียมตัว</th></tr>
+    <tr><td>ทีม</td><td>3 คน ใช้<b>คอมพิวเตอร์เครื่องเดียว</b></td><td>เวลาพิมพ์เป็นทรัพยากรที่แย่งกัน — ต้องคิดบนกระดาษให้จบก่อนขึ้นเครื่อง</td></tr>
+    <tr><td>เวลา</td><td>5 ชั่วโมง, โจทย์ประมาณ 10–13 ข้อ (ภาษาอังกฤษ)</td><td>อ่านเร็ว, แบ่งโจทย์กันอ่าน, รู้ว่าข้อไหนควรทิ้ง</td></tr>
+    <tr><td>คะแนน</td><td>เรียงตาม<b>จำนวนข้อที่ผ่าน</b> แล้วจึงดู penalty = ผลรวมนาทีที่ผ่านแต่ละข้อ + 20 นาทีต่อ wrong submission (นับเฉพาะข้อที่ผ่านในที่สุด)</td><td>ข้อง่ายต้องผ่านเร็วและไม่พลาด — submit ผิดแพงกว่าที่คิด</td></tr>
+    <tr><td>ผลตัดสิน</td><td>ได้แค่ Accepted / Wrong Answer / TLE / RTE ฯลฯ ไม่มี partial score, ไม่เห็น test</td><td>ต้องหา bug เองด้วย test ที่คิดเองและ stress test</td></tr>
+    <tr><td>เอกสาร</td><td>ส่วนใหญ่อนุญาต team notebook แบบพิมพ์ (มักจำกัด 25 หน้า A4) ห้ามอินเทอร์เน็ต</td><td>เตรียม notebook ของทีมตั้งแต่ตอนนี้ — ทุกหน้าในชุดนี้มีโค้ดที่ควรใส่</td></tr>
+  </table></div>
+  <div class="box warn"><span class="label">เช็คกฎจริงของปีนี้</span>วันแข่ง สถานที่ (Taiwan regional หมุนเวียนระหว่างมหาวิทยาลัยหลายแห่ง) จำนวนหน้าของ notebook ภาษาที่อนุญาต และ compiler flags ให้ดูจากประกาศของ regional บน <a href="https://icpc.global" target="_blank" rel="noopener">icpc.global</a> และเว็บของผู้จัดปีนั้น — ตัวเลขด้านบนเป็นค่าทั่วไปของ ICPC Asia regional</div>
+
+  <h2>"พร้อมขั้นพื้นฐาน" หมายถึงอะไร</h2>
+  <p>ใน regional ของเอเชีย ทีมที่เตรียมตัวดีระดับพื้นฐานควร<b>ทำข้อง่ายทุกข้อได้ภายใน 1–2 ชั่วโมงแรกโดยไม่ WA</b> และมีโอกาสได้ข้อระดับกลางอีก 1–3 ข้อ ข้อเหล่านั้นเกือบทั้งหมดมาจากเครื่องมือในชุดนี้:</p>
+  <ul>
+    <li>Implementation / simulation ที่ต้องเขียนให้ถูกในครั้งเดียว</li>
+    <li>Sorting + greedy, binary search on answer, two pointers, prefix sums</li>
+    <li>DP มาตรฐาน (knapsack, LIS, grid, interval, bitmask เล็กๆ)</li>
+    <li>Graph: BFS/DFS, Dijkstra, DSU/MST, topological sort, SCC เบื้องต้น</li>
+    <li>Tree: DFS order, LCA, tree DP; Data structures: Fenwick, segment tree (+lazy)</li>
+    <li>Math: modular arithmetic, sieve, gcd, nCr mod p</li>
+    <li>String: hashing, KMP/Z; Geometry: cross product, convex hull</li>
+  </ul>
+  <p>หัวข้อขั้นสูง (flow ซับซ้อน, FFT, suffix automaton, HLD, CHT ฯลฯ) มีกล่าวถึงเป็น "ภาคต่อ" เท่านั้น — ถ้ายังทำโจทย์ "ต้องทำ" ในชุดนี้ไม่ครบ อย่าเพิ่งไปถึงตรงนั้น</p>
+
+  <h2>บทเรียน</h2>
+  <div class="cards">
+    <a class="card" href="01-foundations.html" data-page="01-foundations.html"><div class="num">01</div><h3>C++ & พื้นฐานการแข่ง</h3><p>Template, complexity budget, STL ที่ต้องคล่อง, overflow, bit tricks, complete search</p><div class="count"></div></a>
+    <a class="card" href="02-search-greedy.html" data-page="02-search-greedy.html"><div class="num">02</div><h3>Sorting, Binary Search, Greedy</h3><p>Prefix sum, two pointers, binary search on answer, sweep line, exchange argument</p><div class="count"></div></a>
+    <a class="card" href="03-dp.html" data-page="03-dp.html"><div class="num">03</div><h3>Dynamic Programming</h3><p>วิธีนิยาม state, knapsack, LIS, grid, interval, bitmask, digit DP</p><div class="count"></div></a>
+    <a class="card" href="04-graphs.html" data-page="04-graphs.html"><div class="num">04</div><h3>Graph Algorithms</h3><p>BFS/DFS, shortest paths, DSU/MST, topo sort, SCC, bridges, bipartite matching, max flow</p><div class="count"></div></a>
+    <a class="card" href="05-trees-ds.html" data-page="05-trees-ds.html"><div class="num">05</div><h3>Trees & Data Structures</h3><p>Tree DP, Euler tour, LCA, Fenwick, segment tree + lazy, sparse table, monotonic stack</p><div class="count"></div></a>
+    <a class="card" href="06-math.html" data-page="06-math.html"><div class="num">06</div><h3>Math & Number Theory</h3><p>Mod arithmetic, sieve, ext. gcd, nCr, matrix power, inclusion–exclusion, game theory</p><div class="count"></div></a>
+    <a class="card" href="07-strings.html" data-page="07-strings.html"><div class="num">07</div><h3>Strings</h3><p>Polynomial hashing, KMP, Z-function, trie, Manacher</p><div class="count"></div></a>
+    <a class="card" href="08-geometry.html" data-page="08-geometry.html"><div class="num">08</div><h3>Computational Geometry</h3><p>Point/vector, cross product, segment intersection, polygon area, convex hull</p><div class="count"></div></a>
+    <a class="card" href="09-contest.html" data-page="09-contest.html"><div class="num">09</div><h3>กลยุทธ์ทีม & Mock Contest</h3><p>บทบาทในทีม, การอ่านโจทย์, debugging, stress test, notebook, ตาราง mock contest</p><div class="count"></div></a>
+  </div>
+
+  <h2>วิธีใช้ชุดนี้</h2>
+  <ol>
+    <li><b>อ่านหัวข้อ</b> ให้เข้าใจ "สังเกตยังไงว่าโจทย์ใช้เทคนิคนี้" มากกว่าจำโค้ด</li>
+    <li><b>พิมพ์ template เองจากความเข้าใจ</b> (อย่า copy) แล้วใช้ทำโจทย์ข้อแรกของหัวข้อ — template ที่ผ่าน AC แล้วค่อยใส่ notebook</li>
+    <li><b>ทำโจทย์ที่ติดป้าย <span class="tag must">ต้องทำ</span> ให้ครบ</b> ข้อที่เหลือทำเมื่อมีเวลา ข้อ <span class="tag hard">ท้าทาย</span> คือระดับกลางของ regional</li>
+    <li>ติดเกิน 40–60 นาทีโดยไม่มีไอเดียใหม่ → อ่าน hint/editorial แล้ว<b>เขียนเองใหม่ทั้งหมด</b> จด "ไอเดียที่พลาด" ไว้หนึ่งบรรทัด</li>
+    <li>ทุกสัปดาห์ทำ mock contest ทั้งทีม (ดูหน้า 09) — ทักษะทีมฝึกจากการทำโจทย์คนเดียวไม่ได้</li>
+  </ol>
+  <div class="box good">โจทย์ที่มีป้าย <span class="tag repo">มีใน repo แล้ว</span> คือข้อที่มีไฟล์ใน <code>cses/</code> ของ repo นี้ จึงติ๊กไว้ให้ก่อน — ถ้ายังไม่ AC จริงก็เอาติ๊กออกได้</div>
+
+  <h2>ตารางเวลา</h2>
+  <h3>แผนเต็ม 8 สัปดาห์ (~15–20 ชม./สัปดาห์)</h3>
+  <div class="table-wrap"><table>
+    <tr><th>สัปดาห์</th><th>เนื้อหา</th><th>ทีม</th></tr>
+    <tr><td>1</td><td>01 พื้นฐาน + 02 Search/Greedy</td><td>ตกลงภาษา/editor/template ร่วมกัน</td></tr>
+    <tr><td>2</td><td>03 DP (ครึ่งแรก) + ทบทวน 02</td><td>Mock 1 (ชุดง่าย, 3 ชม.)</td></tr>
+    <tr><td>3</td><td>03 DP (ครึ่งหลัง) + 04 Graph (BFS→MST)</td><td>Mock 2</td></tr>
+    <tr><td>4</td><td>04 Graph (topo/SCC/flow) + 05 Trees</td><td>Mock 3 + เริ่มรวม notebook</td></tr>
+    <tr><td>5</td><td>05 Data structures + 06 Math</td><td>Mock 4 (5 ชม. เต็ม)</td></tr>
+    <tr><td>6</td><td>07 Strings + 08 Geometry</td><td>Mock 5</td></tr>
+    <tr><td>7</td><td>เก็บข้อ "ต้องทำ" ที่ค้าง, ทำข้อท้าทาย</td><td>Mock 6 + 7 (ชุด regional ย้อนหลัง)</td></tr>
+    <tr><td>8</td><td>ทบทวน notebook, ไม่เรียนของใหม่</td><td>Mock 8, พิมพ์ notebook, ซ้อมเครื่องจริง</td></tr>
+  </table></div>
+  <h3>ถ้าเหลือเวลาไม่ถึง 3 สัปดาห์</h3>
+  <p>ทำเฉพาะข้อ <span class="tag must">ต้องทำ</span> ในหน้า 02, 03, 04, 05 (ส่วน DSU/Dijkstra/Fenwick/segment tree) และ 06 (mod/sieve/nCr) ข้าม 07–08 ไปก่อนยกเว้น string hashing กับ cross product แล้วใช้เวลาที่เหลือกับ mock contest อย่างน้อย 2 ครั้งและทำ notebook — การได้ข้อง่ายครบเร็วสำคัญกว่าการรู้หัวข้อเพิ่มอีกหนึ่งเรื่อง</p>
+
+  <h2>Checklist ความพร้อมก่อนวันแข่ง</h2>
+  <ul class="problems">
+    <li data-id="ready-1">เขียน BFS, Dijkstra, DSU, Fenwick, segment tree (lazy) ได้จากความจำภายใน 10 นาทีต่ออัน และผ่าน AC</li>
+    <li data-id="ready-2">ทำ CSES ข้อ "ต้องทำ" ครบทุกหน้า</li>
+    <li data-id="ready-3">ทำ mock contest 5 ชม. ทั้งทีมแล้วอย่างน้อย 4 ครั้ง และทบทวนหลังแข่งทุกครั้ง</li>
+    <li data-id="ready-4">ทำชุดโจทย์ ICPC Asia regional ย้อนหลัง (Taiwan หรือ regional อื่นในเอเชีย) แล้วอย่างน้อย 2 ชุด</li>
+    <li data-id="ready-5">Team notebook พิมพ์แล้ว ทุกโค้ดในนั้นเคยผ่าน AC และมีสารบัญ</li>
+    <li data-id="ready-6">มี script stress test (brute vs solution) ที่ใช้ได้ทันที</li>
+    <li data-id="ready-7">ทีมตกลงบทบาทและกติกาการใช้เครื่องแล้ว (ใครพิมพ์ เมื่อไหร่ต้องลุก, ใครดู scoreboard)</li>
+    <li data-id="ready-8">ซ้อมกับ environment แบบวันแข่ง (Linux, editor ที่มีให้, ไม่มี autocomplete/AI/internet)</li>
+  </ul>
+
+  <h2>แหล่งอ้างอิงหลัก</h2>
+  <ul>
+    <li><a href="https://cses.fi/book/book.pdf" target="_blank" rel="noopener">Competitive Programmer's Handbook</a> (Antti Laaksonen) — คู่กับ CSES Problem Set</li>
+    <li><a href="https://usaco.guide" target="_blank" rel="noopener">USACO Guide</a> — อธิบายดีมาก มีโจทย์แยกระดับ (Silver/Gold ≈ ระดับที่ต้องการ)</li>
+    <li><a href="https://cp-algorithms.com" target="_blank" rel="noopener">cp-algorithms.com</a> — อ้างอิงอัลกอริทึมพร้อมพิสูจน์</li>
+    <li><a href="https://github.com/kth-competitive-programming/kactl" target="_blank" rel="noopener">KACTL</a> — ตัวอย่าง team notebook มาตรฐาน</li>
+    <li><a href="https://codeforces.com/gyms" target="_blank" rel="noopener">Codeforces Gym</a> — ค้นคำว่า "ICPC Asia Taiwan", "Taoyuan", "Taichung", "Taipei" เพื่อหาชุด regional ย้อนหลัง</li>
+  </ul>
+</main>
+<script src="assets/app.js"></script>
+</body>
+</html>

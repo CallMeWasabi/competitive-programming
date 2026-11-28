@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trees and Data Structures</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="05-trees-ds.html">
+<main>
+  <div class="kicker">บทที่ 05</div>
+  <h1>Trees & Data Structures</h1>
+  <p class="lead">Tree กับ range query มักมาด้วยกัน: Euler tour แปลง subtree เป็นช่วง แล้วใช้ Fenwick/segment tree ตอบ query คุณมี segment tree + lazy อยู่แล้วใน <code>template/</code> หน้านี้จึงเน้นว่า<b>ใช้ตอนไหน</b>และต่อยอดไปที่ tree</p>
+  <div class="page-progress" id="page-progress"></div>
+
+  <nav class="toc"><b>ในหน้านี้</b><ol>
+    <li><a href="#choose">เลือก data structure</a></li>
+    <li><a href="#mono">Monotonic stack / deque</a></li>
+    <li><a href="#sparse">Sparse table</a></li>
+    <li><a href="#fenwick">Fenwick tree</a></li>
+    <li><a href="#seg">Segment tree (+lazy)</a></li>
+    <li><a href="#treebasic">Tree basics & diameter</a></li>
+    <li><a href="#treedp">Tree DP & rerooting</a></li>
+    <li><a href="#euler">Euler tour</a></li>
+    <li><a href="#lca">Binary lifting & LCA</a></li>
+    <li><a href="#offline">เทคนิค offline</a></li>
+    <li><a href="#practice">แบบฝึกหัด</a></li>
+  </ol></nav>
+
+  <h2 id="choose">1. เลือก data structure</h2>
+  <div class="table-wrap"><table>
+    <tr><th>Query</th><th>Update</th><th>ใช้</th></tr>
+    <tr><td>sum ช่วง</td><td>ไม่มี</td><td>prefix sum</td></tr>
+    <tr><td>min/max/gcd ช่วง</td><td>ไม่มี</td><td>sparse table O(1)</td></tr>
+    <tr><td>sum ช่วง</td><td>แก้ค่าจุดเดียว</td><td>Fenwick (สั้นสุด)</td></tr>
+    <tr><td>ค่าที่จุดเดียว</td><td>บวกทั้งช่วง</td><td>Fenwick บน difference array</td></tr>
+    <tr><td>min/max/อะไรก็ได้ที่ merge ได้</td><td>แก้ค่าจุดเดียว</td><td>segment tree</td></tr>
+    <tr><td>sum/min ช่วง</td><td>บวก/กำหนดค่าทั้งช่วง</td><td>segment tree + lazy</td></tr>
+    <tr><td>min ใน window ที่เลื่อนไป</td><td>—</td><td>monotonic deque O(n)</td></tr>
+    <tr><td>"ตัวใกล้ที่สุดที่เล็กกว่า"</td><td>—</td><td>monotonic stack O(n)</td></tr>
+  </table></div>
+
+  <h2 id="mono">2. Monotonic stack / deque</h2>
+<pre><code>// ตัวแรกทางซ้ายที่เล็กกว่า a[i]
+vector&lt;int&gt; L(n), st;
+for (int i = 0; i &lt; n; i++) {
+    while (!st.empty() &amp;&amp; a[st.back()] &gt;= a[i]) st.pop_back();
+    L[i] = st.empty() ? -1 : st.back();
+    st.push_back(i);
+}
+// ใช้หา "สี่เหลี่ยมใหญ่สุดใน histogram": แต่ละ i ขยายได้ระหว่าง L[i]+1 ถึง R[i]-1
+
+// min ของทุก window ขนาด k
+deque&lt;int&gt; dq;
+for (int i = 0; i &lt; n; i++) {
+    while (!dq.empty() &amp;&amp; a[dq.back()] &gt;= a[i]) dq.pop_back();
+    dq.push_back(i);
+    if (dq.front() &lt;= i - k) dq.pop_front();
+    if (i &gt;= k - 1) ans.push_back(a[dq.front()]);
+}</code></pre>
+
+  <h2 id="sparse">3. Sparse table (static RMQ)</h2>
+<pre><code>int LOG = __lg(n) + 1;
+vector&lt;vector&lt;int&gt;&gt; sp(LOG, vector&lt;int&gt;(n));
+sp[0] = a;
+for (int j = 1; j &lt; LOG; j++)
+    for (int i = 0; i + (1 &lt;&lt; j) &lt;= n; i++)
+        sp[j][i] = min(sp[j-1][i], sp[j-1][i + (1 &lt;&lt; (j-1))]);
+auto query = [&amp;](int l, int r) {          // [l, r] รวมปลาย
+    int j = __lg(r - l + 1);
+    return min(sp[j][l], sp[j][r - (1 &lt;&lt; j) + 1]);
+};</code></pre>
+
+  <h2 id="fenwick">4. Fenwick tree (BIT)</h2>
+<pre><code>struct BIT {
+    int n; vector&lt;ll&gt; t;
+    BIT(int n) : n(n), t(n + 1, 0) {}
+    void add(int i, ll v) { for (i++; i &lt;= n; i += i &amp; -i) t[i] += v; }      // 0-indexed
+    ll sum(int i) { ll r = 0; for (i++; i &gt; 0; i -= i &amp; -i) r += t[i]; return r; } // a[0..i]
+    ll sum(int l, int r) { return sum(r) - (l ? sum(l - 1) : 0); }
+};
+// range add + point query: add(l, v); add(r+1, -v); ค่าที่ i = sum(i)
+// นับ inversion: วนจากซ้าย, ans += (จำนวนที่ใส่ไปแล้วซึ่ง &gt; a[i]) แล้ว add(a[i], 1) (compress ค่าก่อน)</code></pre>
+
+  <h2 id="seg">5. Segment tree (+lazy)</h2>
+  <p>เขียน segment tree แบบ <b>generic</b> ครั้งเดียวใน notebook แล้วเปลี่ยนแค่ <code>Node</code>, <code>merge</code>, และวิธี apply lazy — ทุกโจทย์ "ข้อมูลรวมของช่วงที่ merge ได้" ใช้ได้หมด (max subarray sum ในช่วง = เก็บ {sum, best prefix, best suffix, best})</p>
+<pre><code>// Range add, range sum (ปรับ merge/apply ตามโจทย์)
+struct Seg {
+    int n; vector&lt;ll&gt; t, lz;
+    Seg(int n) : n(n), t(4 * n, 0), lz(4 * n, 0) {}
+    void apply(int x, int len, ll v) { t[x] += v * len; lz[x] += v; }
+    void push(int x, int l, int r) {
+        if (!lz[x]) return;
+        int m = (l + r) / 2;
+        apply(2*x, m - l + 1, lz[x]); apply(2*x+1, r - m, lz[x]); lz[x] = 0;
+    }
+    void update(int ql, int qr, ll v, int x, int l, int r) {
+        if (qr &lt; l || r &lt; ql) return;
+        if (ql &lt;= l &amp;&amp; r &lt;= qr) { apply(x, r - l + 1, v); return; }
+        push(x, l, r);
+        int m = (l + r) / 2;
+        update(ql, qr, v, 2*x, l, m); update(ql, qr, v, 2*x+1, m+1, r);
+        t[x] = t[2*x] + t[2*x+1];
+    }
+    ll query(int ql, int qr, int x, int l, int r) {
+        if (qr &lt; l || r &lt; ql) return 0;
+        if (ql &lt;= l &amp;&amp; r &lt;= qr) return t[x];
+        push(x, l, r);
+        int m = (l + r) / 2;
+        return query(ql, qr, 2*x, l, m) + query(ql, qr, 2*x+1, m+1, r);
+    }
+    void update(int l, int r, ll v) { update(l, r, v, 1, 0, n - 1); }
+    ll query(int l, int r) { return query(l, r, 1, 0, n - 1); }
+};</code></pre>
+  <div class="box idea"><span class="label">Walk on segment tree</span>"หาตำแหน่งแรกที่ค่า ≥ x" (Hotel Queries) ทำได้ใน O(log n) โดยเดินลงต้นไม้: ถ้าลูกซ้าย max ≥ x ลงซ้าย ไม่งั้นลงขวา — ไม่ต้อง binary search ครอบ query อีกชั้น (ที่จะเป็น O(log² n))</div>
+  <div class="box warn">Lazy สองชนิด (กำหนดค่า + บวก) ต้องคิดลำดับการประกอบ lazy ให้ถูก: "กำหนดค่า" ล้าง "บวก" ที่ค้างอยู่ — ทดสอบด้วย brute force เสมอ</div>
+
+  <h2 id="treebasic">6. Tree basics & diameter</h2>
+<pre><code>// DFS แบบ iterative: ได้ parent, depth, ลำดับ (pre-order) โดยไม่มีปัญหา stack
+vector&lt;int&gt; par(n, -1), dep(n, 0), order; order.reserve(n);
+vector&lt;int&gt; st = {root}; par[root] = root;
+while (!st.empty()) {
+    int v = st.back(); st.pop_back(); order.push_back(v);
+    for (int u : adj[v]) if (u != par[v]) { par[u] = v; dep[u] = dep[v] + 1; st.push_back(u); }
+}
+// ประมวลผลจากใบขึ้นราก = วน order ย้อนหลัง
+vector&lt;int&gt; sz(n, 1);
+for (int i = n - 1; i &gt; 0; i--) sz[par[order[i]]] += sz[order[i]];
+
+// Diameter: BFS จากจุดใดก็ได้ → จุดไกลสุด a; BFS จาก a → จุดไกลสุด b; dist(a,b) คือ diameter</code></pre>
+
+  <h2 id="treedp">7. Tree DP & rerooting</h2>
+  <p>Tree DP: <code>dp[v]</code> คำนวณจาก <code>dp</code> ของลูก — เช่น maximum matching บน tree: <code>dp[v][0/1]</code> = คำตอบใน subtree ของ v เมื่อ v ยังว่าง/ถูกจับคู่แล้ว</p>
+  <p><b>Rerooting</b> (ถามคำตอบเมื่อแต่ละ node เป็นราก): รอบแรกคำนวณ "ข้อมูลด้านล่าง" จากใบขึ้น, รอบสองส่ง "ข้อมูลด้านบน" จากรากลง</p>
+<pre><code>// ผลรวมระยะทางจาก v ไปทุก node (Tree Distances II)
+// down[v] = ผลรวมระยะทางไป node ใน subtree ของ v
+for (int i = n - 1; i &gt;= 0; i--) { int v = order[i];
+    for (int u : adj[v]) if (u != par[v]) down[v] += down[u] + sz[u]; }
+// ans[root] = down[root]; ย้ายรากจาก v ไปลูก u: node ใน subtree u ใกล้ขึ้น 1, ที่เหลือไกลขึ้น 1
+ans[root] = down[root];
+for (int v : order) for (int u : adj[v]) if (u != par[v])
+    ans[u] = ans[v] - sz[u] + (n - sz[u]);</code></pre>
+
+  <h2 id="euler">8. Euler tour: subtree → ช่วง</h2>
+<pre><code>// tin[v]..tout[v] คือช่วงของ subtree v ใน array แบน
+int timer = 0;
+function&lt;void(int,int)&gt; dfs = [&amp;](int v, int p) {
+    tin[v] = timer++;
+    for (int u : adj[v]) if (u != p) dfs(u, v);
+    tout[v] = timer - 1;
+};
+// subtree sum ของ v = BIT.sum(tin[v], tout[v]) ; เปลี่ยนค่า v = BIT.add(tin[v], delta)
+// path root→v sum: บวก val ที่ tin[v], ลบ val ที่ tout[v]+1 แล้ว prefix sum ถึง tin[v]</code></pre>
+
+  <h2 id="lca">9. Binary lifting & LCA</h2>
+<pre><code>int LOG = 18;                               // 2^18 &gt; 2·10^5
+vector&lt;vector&lt;int&gt;&gt; up(LOG, vector&lt;int&gt;(n));
+up[0] = par;                                // par[root] = root
+for (int j = 1; j &lt; LOG; j++) for (int v = 0; v &lt; n; v++) up[j][v] = up[j-1][up[j-1][v]];
+
+auto kth = [&amp;](int v, int k) {              // บรรพบุรุษลำดับที่ k
+    for (int j = 0; j &lt; LOG; j++) if (k &gt;&gt; j &amp; 1) v = up[j][v];
+    return v;
+};
+auto lca = [&amp;](int a, int b) {
+    if (dep[a] &lt; dep[b]) swap(a, b);
+    a = kth(a, dep[a] - dep[b]);
+    if (a == b) return a;
+    for (int j = LOG - 1; j &gt;= 0; j--) if (up[j][a] != up[j][b]) a = up[j][a], b = up[j][b];
+    return up[0][a];
+};
+// dist(a,b) = dep[a] + dep[b] - 2*dep[lca(a,b)]
+// นับ path ผ่านแต่ละ node: cnt[a]++, cnt[b]++, cnt[lca]--, cnt[par[lca]]-- แล้วรวมจากใบขึ้นราก</code></pre>
+  <p class="muted small">Binary lifting ใช้ได้กับ <b>functional graph</b> ด้วย (ทุก node มี edge ออกหนึ่งเส้น — "หลังจากกระโดด k ครั้งอยู่ที่ไหน", Planets Queries I)</p>
+
+  <h2 id="offline">10. เทคนิค offline ที่ควรรู้จัก</h2>
+  <ul>
+    <li><b>Sort query:</b> Distinct Values Queries — เรียง query ตาม r แล้วเก็บ "ตำแหน่งล่าสุดของแต่ละค่า" ใน BIT</li>
+    <li><b>Small-to-large merging:</b> รวม set ของลูกเข้ากับ set ที่ใหญ่สุด → O(n log² n) (Distinct Colors)</li>
+    <li><b>Coordinate compression + BIT</b> แทน order-statistics tree; หรือใช้ PBDS <code>tree&lt;...&gt;</code> (มีใน <code>template/pbds_hash_and_tree.cpp</code>)</li>
+    <li>ภาคต่อ: Heavy-Light Decomposition (path query + update), Mo's algorithm, persistent segment tree</li>
+  </ul>
+
+  <h2 id="practice">11. แบบฝึกหัด</h2>
+  <h3>Range queries</h3>
+  <ul class="problems">
+    <li class="repo"><a data-cses="1646">Static Range Sum Queries</a></li>
+    <li class="repo must"><a data-cses="1647">Static Range Minimum Queries</a><div class="meta">sparse table</div></li>
+    <li class="repo must"><a data-cses="1648">Dynamic Range Sum Queries</a><div class="meta">Fenwick</div></li>
+    <li class="repo"><a data-cses="1649">Dynamic Range Minimum Queries</a></li>
+    <li class="repo"><a data-cses="1650">Range Xor Queries</a></li>
+    <li class="repo"><a data-cses="1651">Range Update Queries</a></li>
+    <li class="must"><a data-cses="1652">Forest Queries</a><div class="meta">2D prefix sum</div></li>
+    <li class="repo must"><a data-cses="1143">Hotel Queries</a><div class="meta">walk on segment tree</div></li>
+    <li class="repo"><a data-cses="1749">List Removals</a></li>
+    <li class="repo"><a data-cses="1144">Salary Queries</a></li>
+    <li class="must"><a data-cses="2166">Prefix Sum Queries</a><div class="meta">node เก็บ {sum, max prefix}</div></li>
+    <li class="must"><a data-cses="1190">Subarray Sum Queries</a><div class="meta">node 4 ค่า</div></li>
+    <li class="repo hard"><a data-cses="1734">Distinct Values Queries</a></li>
+    <li class="must"><a data-cses="1735">Range Updates and Sums</a><div class="meta">lazy สองชนิด</div></li>
+    <li class="hard"><a data-cses="1736">Polynomial Queries</a></li>
+    <li class="repo" data-id="sliding-window-minimum"><a href="https://cses.fi/problemset/">Sliding Window Minimum</a> <span class="tag">CSES</span><div class="meta">หมวด Sliding Window · monotonic deque</div></li>
+  </ul>
+  <h3>Trees</h3>
+  <ul class="problems">
+    <li class="must"><a data-cses="1674">Subordinates</a><div class="meta">subtree size</div></li>
+    <li class="must"><a data-cses="1130">Tree Matching</a><div class="meta">tree DP</div></li>
+    <li class="repo must"><a data-cses="1131">Tree Diameter</a></li>
+    <li><a data-cses="1132">Tree Distances I</a></li>
+    <li class="must"><a data-cses="1133">Tree Distances II</a><div class="meta">rerooting</div></li>
+    <li class="must"><a data-cses="1687">Company Queries I</a><div class="meta">binary lifting</div></li>
+    <li class="must"><a data-cses="1688">Company Queries II</a><div class="meta">LCA</div></li>
+    <li class="must"><a data-cses="1135">Distance Queries</a></li>
+    <li><a data-cses="1136">Counting Paths</a><div class="meta">difference บน tree</div></li>
+    <li class="must"><a data-cses="1137">Subtree Queries</a><div class="meta">Euler tour + BIT</div></li>
+    <li><a data-cses="1138">Path Queries</a></li>
+    <li class="hard"><a data-cses="1139">Distinct Colors</a><div class="meta">small-to-large</div></li>
+    <li><a data-cses="1750">Planets Queries I</a><div class="meta">binary lifting บน functional graph</div></li>
+  </ul>
+  <div class="box exit"><span class="label">ผ่านบทนี้เมื่อ</span>เขียน BIT และ segment tree lazy ได้ภายใน 10 นาทีโดยไม่ต้องดู, ออกแบบ node ของ segment tree เองได้สำหรับข้อมูลรวมแบบใหม่ และแปลงโจทย์ subtree/path บน tree เป็น range query ได้</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

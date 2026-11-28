@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Contest Strategy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="09-contest.html">
+<main>
+  <div class="kicker">บทที่ 09</div>
+  <h1>กลยุทธ์ทีม & Mock Contest</h1>
+  <p class="lead">ทีมที่รู้เนื้อหาเท่ากัน ผลต่างกันได้ 2–3 ข้อเพราะการจัดการเวลา เครื่อง และ bug หน้านี้คือ "ระบบ" ที่ทีมควรซ้อมจนเป็นอัตโนมัติก่อนวันแข่ง</p>
+  <div class="page-progress" id="page-progress"></div>
+
+  <nav class="toc"><b>ในหน้านี้</b><ol>
+    <li><a href="#roles">บทบาทในทีม</a></li>
+    <li><a href="#timeline">แผน 5 ชั่วโมง</a></li>
+    <li><a href="#reading">อ่านโจทย์ & เลือกข้อ</a></li>
+    <li><a href="#submit">Checklist ก่อน submit</a></li>
+    <li><a href="#wa">เมื่อโดน WA / TLE / RTE</a></li>
+    <li><a href="#stress">Stress testing</a></li>
+    <li><a href="#notebook">Team notebook</a></li>
+    <li><a href="#mock">ตาราง mock contest</a></li>
+    <li><a href="#day">วันแข่ง</a></li>
+  </ol></nav>
+
+  <h2 id="roles">1. บทบาทในทีม</h2>
+  <p>ทุกคนต้องเขียนโค้ดได้ แต่ควรมี "ความถนัดหลัก" ที่ไม่ทับกันมาก เพื่อแบ่งโจทย์ได้เร็ว</p>
+  <div class="table-wrap"><table>
+    <tr><th>บทบาท</th><th>หน้าที่</th><th>ถนัดหัวข้อ (ตัวอย่าง)</th></tr>
+    <tr><td><b>Coder หลัก</b></td><td>พิมพ์เร็วและแม่น ตั้ง template ตอนเริ่ม ทำข้อง่ายข้อแรก</td><td>implementation, data structures</td></tr>
+    <tr><td><b>Thinker</b></td><td>อ่านโจทย์เยอะ คิด solution บนกระดาษจนพร้อมพิมพ์</td><td>DP, math, greedy</td></tr>
+    <tr><td><b>Scout / debugger</b></td><td>ดู scoreboard หาข้อที่ทีมอื่นทำได้ ตรวจโค้ดจาก printout เขียน brute force</td><td>graph, geometry, strings</td></tr>
+  </table></div>
+  <div class="box idea"><span class="label">กฎเครื่องเดียว</span>
+  <ul>
+    <li>ขึ้นเครื่องเมื่อ<b>คิดเสร็จแล้ว</b>เท่านั้น — เขียน pseudo-code หรือโครงหลักบนกระดาษก่อน</li>
+    <li>Debug เกิน 5–10 นาที → <b>print โค้ด</b> แล้วลุกให้คนอื่นใช้เครื่อง ไปไล่บนกระดาษ</li>
+    <li>คนที่ไม่ได้อยู่หน้าเครื่องต้องทำอย่างใดอย่างหนึ่งเสมอ: คิดข้อถัดไป, เขียน test case, หรือตรวจโค้ด</li>
+    <li>พูดออกเสียงทุกครั้งที่ submit และผลที่ได้ เพื่อให้ทุกคนรู้สถานะ (เขียนบนกระดาษรวมด้วยว่าข้อไหน AC/WA/ใครถือ)</li>
+  </ul></div>
+
+  <h2 id="timeline">2. แผน 5 ชั่วโมง</h2>
+  <div class="table-wrap"><table>
+    <tr><th>ช่วงเวลา</th><th>สิ่งที่ทำ</th></tr>
+    <tr><td>0–5 นาที</td><td>Coder พิมพ์ template + script compile/stress; อีกสองคนแบ่งโจทย์ (คนละครึ่ง) อ่านหาข้อง่าย</td></tr>
+    <tr><td>5–60 นาที</td><td>ทำข้อง่ายทั้งหมดให้เร็วที่สุด — ข้อง่ายที่ AC ช้า 30 นาที เสีย penalty เท่ากับ WA 1.5 ครั้ง ดู scoreboard ว่าข้อไหนคนอื่นผ่านเร็ว</td></tr>
+    <tr><td>1–4 ชั่วโมง</td><td>ทำข้อกลางตามลำดับจำนวนทีมที่ผ่านใน scoreboard ทุกข้อที่จะพิมพ์ต้องมีคนอย่างน้อยสองคนเห็นด้วยกับ solution</td></tr>
+    <tr><td>ชั่วโมงสุดท้าย (scoreboard freeze)</td><td>เลือกข้อที่ใกล้ AC ที่สุด 1–2 ข้อแล้วทุ่มทั้งทีม อย่าเริ่มข้อใหม่ที่ยาวเกิน 45 นาที</td></tr>
+    <tr><td>15 นาทีสุดท้าย</td><td>ส่งทุกอย่างที่ "อาจผ่าน" — WA ไม่มีค่าปรับถ้าข้อนั้นไม่ผ่าน</td></tr>
+  </table></div>
+  <div class="box warn"><span class="label">ติดหล่ม</span>ถ้าข้อหนึ่งใช้ไปเกิน 60 นาทีโดยไม่ใกล้ขึ้นเลย และยังมีข้อที่ทีมอื่นผ่านเยอะแต่ทีมเรายังไม่ได้ ให้เปลี่ยนคนหรือเปลี่ยนข้อ — sunk cost เป็นศัตรูอันดับหนึ่งของ ICPC</div>
+
+  <h2 id="reading">3. อ่านโจทย์ & เลือกข้อ</h2>
+  <ul>
+    <li>อ่าน <b>input/output + constraint + sample</b> ก่อนเรื่องราว — บอกระดับความยากได้เร็ว</li>
+    <li>ข้อที่ statement สั้น, ตัวอย่างเยอะ, constraint เล็ก มักง่าย · ข้อที่มีภาพเรขาคณิตหรือ interactive มักถูกทิ้ง</li>
+    <li>เขียนสรุปโจทย์ 2–3 บรรทัดบนกระดาษ (เป็นคณิตศาสตร์ ไม่ใช่เรื่องราว) แล้วส่งต่อให้เพื่อนได้ทันที</li>
+    <li>ก่อนพิมพ์ ลองกับ sample ด้วยมือว่า solution ให้คำตอบถูก</li>
+    <li>scoreboard คือข้อมูลชั้นดี: ข้อที่หลายทีมผ่านภายใน 30 นาที = ง่าย แม้อ่านแล้วดูยาก</li>
+  </ul>
+
+  <h2 id="submit">4. Checklist ก่อน submit (ใช้ 30 วินาที ประหยัด 20 นาที)</h2>
+  <ul class="problems">
+    <li data-id="sub-1">ผ่าน sample ทุกตัว และ test มือ: n = 1, n สูงสุด, ค่าเท่ากันหมด, ค่าติดลบ/ศูนย์</li>
+    <li data-id="sub-2">ไม่มี overflow (ผลคูณ, ผลรวม, INF + w)</li>
+    <li data-id="sub-3">หลาย test case: reset ตัวแปรทุกตัว</li>
+    <li data-id="sub-4">ขนาด array พอ (+5), ไม่มี index −1</li>
+    <li data-id="sub-5">Output format ตรงตัวอักษร (ตัวพิมพ์, ช่องว่าง, "Case #x:") และลบ debug output แล้ว</li>
+    <li data-id="sub-6">Complexity กับ n สูงสุดผ่าน budget (ลองรัน input ขนาดใหญ่ที่สร้างเอง)</li>
+  </ul>
+
+  <h2 id="wa">5. เมื่อโดน WA / TLE / RTE</h2>
+  <ol>
+    <li><b>อ่านโจทย์ใหม่ทั้งหมด</b> (ให้เพื่อนอ่านด้วย) — WA จำนวนมากมาจากเข้าใจโจทย์ผิด</li>
+    <li>ไล่ checklist ด้านบนอีกครั้ง</li>
+    <li>เขียน brute force แล้ว stress test (ด้านล่าง)</li>
+    <li>RTE: array เกิน, recursion ลึก, หาร 0, ใช้ <code>*s.begin()</code> ตอน set ว่าง</li>
+    <li>TLE: endl/ไม่ได้ปิด sync, ส่ง vector by value ใน recursion, <code>map</code> ในลูปที่ใช้ array ได้, Dijkstra ไม่มี <code>if (d != dist[v]) continue</code></li>
+  </ol>
+
+  <h2 id="stress">6. Stress testing</h2>
+  <p>สามไฟล์: <code>sol.cpp</code> (ที่ต้องการทดสอบ), <code>brute.cpp</code> (ช้าแต่ถูกแน่), <code>gen.cpp</code> (สุ่ม input <b>ขนาดเล็ก</b>) — test เล็กจะทำให้ debug ง่าย</p>
+<pre><code>// gen.cpp — seed มาจาก argument เพื่อให้ทำซ้ำได้
+#include &lt;bits/stdc++.h&gt;
+using namespace std;
+int main(int argc, char **argv) {
+    mt19937 rng(atoi(argv[1]));
+    auto rnd = [&amp;](int l, int r) { return (int)(rng() % (r - l + 1)) + l; };
+    int n = rnd(1, 8);
+    cout &lt;&lt; n &lt;&lt; '\n';
+    for (int i = 0; i &lt; n; i++) cout &lt;&lt; rnd(1, 10) &lt;&lt; " \n"[i == n - 1];
+}</code></pre>
+<pre><code class="language-bash"># stress.sh  (Linux / WSL — environment วันแข่งเป็น Linux)
+g++ -O2 -o sol sol.cpp &amp;&amp; g++ -O2 -o brute brute.cpp &amp;&amp; g++ -O2 -o gen gen.cpp || exit 1
+for i in $(seq 1 2000); do
+    ./gen $i &gt; in
+    ./sol &lt; in &gt; out1
+    ./brute &lt; in &gt; out2
+    if ! cmp -s out1 out2; then
+        echo "Mismatch on seed $i"; cat in; echo "sol:"; cat out1; echo "brute:"; cat out2
+        exit
+    fi
+done
+echo "All passed"</code></pre>
+  <p class="muted small">ซ้อมพิมพ์ script นี้จนทำได้ใน 2 นาที — ในวันแข่งไม่มีไฟล์ของคุณ (ยกเว้นใน notebook ที่พิมพ์มา)</p>
+
+  <h2 id="notebook">7. Team notebook</h2>
+  <p>repo นี้มี <code>docs/icpc_sheet.pdf</code> และ <code>docs/icpc.vimrc</code> อยู่แล้ว — ใช้เป็นจุดเริ่ม แล้วเพิ่ม template จากบทเรียนนี้ที่<b>ผ่าน AC แล้วเท่านั้น</b></p>
+  <div class="table-wrap"><table>
+    <tr><th>หมวด</th><th>ควรมี</th></tr>
+    <tr><td>Setup</td><td>template, .vimrc, compile command, stress.sh, gen.cpp</td></tr>
+    <tr><td>Data structures</td><td>DSU, BIT, segment tree lazy (generic), sparse table, PBDS</td></tr>
+    <tr><td>Graph</td><td>Dijkstra, Bellman-Ford, topo, Tarjan SCC + 2-SAT, bridges/AP, LCA, Dinic, Kuhn</td></tr>
+    <tr><td>Math</td><td>power/inverse, ext_gcd, CRT, sieve (spf), nCr, matrix power, Miller–Rabin (ภาคต่อ)</td></tr>
+    <tr><td>String</td><td>hashing, prefix function, Z, Manacher, trie</td></tr>
+    <tr><td>Geometry</td><td>Point struct, orient, segment intersection, area, point-in-polygon, hull</td></tr>
+    <tr><td>Cheat sheet</td><td>ตาราง complexity budget, สูตร combinatorics, ค่าคงที่ (จำนวนเฉพาะใหญ่, 2<sup>k</sup>)</td></tr>
+  </table></div>
+  <p>ใช้ font เล็ก (8–9pt) 2 คอลัมน์ landscape, มีสารบัญหน้าแรก, ตรวจจำนวนหน้าและข้อกำหนดของ regional ปีนี้ — <a href="https://github.com/kth-competitive-programming/kactl" target="_blank" rel="noopener">KACTL</a> เป็นตัวอย่างรูปแบบที่ดี</p>
+
+  <h2 id="mock">8. ตาราง mock contest</h2>
+  <p>ทำแบบ <b>virtual contest ทั้งทีม เครื่องเดียว 5 ชั่วโมง</b> ใน Codeforces Gym (ค้นชื่อ regional แล้วกด "Virtual participation" — ต้องมีบัญชี Codeforces) ทำทุกสัปดาห์และทบทวนในวันถัดไป</p>
+  <ul class="problems">
+    <li data-id="mock-1"><a href="https://codeforces.com/gyms" target="_blank" rel="noopener">Mock 1</a> — ชุด ICPC Asia regional ที่ง่ายหน่อย (3 ชม.) เพื่อซ้อมระบบทีม<div class="meta">เน้น: แบ่งโจทย์, กฎเครื่องเดียว</div></li>
+    <li data-id="mock-2"><a href="https://codeforces.com/gyms" target="_blank" rel="noopener">Mock 2</a> — ICPC Asia regional ใดก็ได้ (5 ชม.)</li>
+    <li data-id="mock-3"><a href="https://codeforces.com/gyms" target="_blank" rel="noopener">Mock 3</a> — ICPC Asia regional (5 ชม.)<div class="meta">เริ่มใช้ notebook ฉบับร่าง</div></li>
+    <li data-id="mock-4"><a href="https://codeforces.com/gyms" target="_blank" rel="noopener">Mock 4</a> — ICPC Asia Taiwan regional ปีเก่า (5 ชม.)</li>
+    <li data-id="mock-5"><a href="https://codeforces.com/gyms" target="_blank" rel="noopener">Mock 5</a> — ICPC Asia regional อื่น เช่น Jakarta / Seoul / Hanoi / Manila (5 ชม.)</li>
+    <li data-id="mock-6"><a href="https://codeforces.com/gyms" target="_blank" rel="noopener">Mock 6</a> — ICPC Asia Taiwan regional ปีเก่าอีกปี (5 ชม.)</li>
+    <li data-id="mock-7"><a href="https://codeforces.com/gyms" target="_blank" rel="noopener">Mock 7</a> — ชุดที่ยากกว่าระดับทีม (ซ้อมการเลือกข้อและการทิ้งข้อ)</li>
+    <li data-id="mock-8"><a href="https://codeforces.com/gyms" target="_blank" rel="noopener">Mock 8</a> — สัปดาห์สุดท้าย: ชุด Taiwan ล่าสุดที่หาได้ กับ notebook ฉบับพิมพ์จริง</li>
+  </ul>
+  <div class="box idea"><span class="label">ทบทวนหลัง mock (สำคัญกว่าตัว mock)</span>
+  สำหรับทุกข้อเขียนหนึ่งบรรทัด: <i>ผล / เวลาที่ AC / ทำไมช้าหรือพลาด / ข้อที่ไม่ได้ต้องรู้อะไรเพิ่ม</i> แล้ว upsolve อย่างน้อย 1–2 ข้อที่ "เกือบได้" ภายในสัปดาห์นั้น และเพิ่มสิ่งที่ขาดเข้า notebook</div>
+  <p>ซ้อมเดี่ยวระหว่างสัปดาห์: <a href="https://atcoder.jp/contests/archive" target="_blank" rel="noopener">AtCoder ABC</a> ข้อ D–F และ Codeforces Div. 2 ข้อ C–E คือระดับใกล้เคียงข้อกลางของ regional</p>
+
+  <h2 id="day">9. วันแข่ง</h2>
+  <ul class="problems">
+    <li data-id="day-1">วันก่อนหน้า: ไม่เรียนของใหม่ นอนให้พอ เตรียม notebook ฉบับพิมพ์, บัตร, นาฬิกา (ถ้าอนุญาต)</li>
+    <li data-id="day-2">Practice session: ทดสอบ compiler, editor, การ print, การ submit, ความเร็วของ judge (ส่งโค้ด loop 10<sup>8</sup> ดูเวลา), stack limit (recursion ลึก 10<sup>6</sup>)</li>
+    <li data-id="day-3">ตกลงกันอีกครั้ง: ใครอ่านข้อไหน ใครพิมพ์ template</li>
+    <li data-id="day-4">ระหว่างแข่ง: กินน้ำ/ขนม ไม่โทษกันเมื่อ WA — สถานการณ์ตึงเครียดทำให้ทีมพลาดมากกว่าความรู้ที่ขาด</li>
+  </ul>
+  <div class="box exit"><span class="label">พร้อมแล้วเมื่อ</span>ทีมทำ mock 5 ชั่วโมงแล้วอย่างน้อย 4 ครั้ง, ข้อง่ายของ regional ย้อนหลังผ่านภายในชั่วโมงแรกเกือบทุกครั้ง, notebook พิมพ์แล้ว และทุกคนรู้ว่าตัวเองต้องทำอะไรใน 5 นาทีแรก — ขอให้โชคดีที่ไต้หวัน!</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>String Algorithms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="07-strings.html">
+<main>
+  <div class="kicker">บทที่ 07</div>
+  <h1>Strings</h1>
+  <p class="lead">สำหรับระดับพื้นฐาน <b>string hashing</b> คือเครื่องมือที่คุ้มที่สุด: แก้ได้เกือบทุกโจทย์ "เปรียบเทียบ substring" ใน O(1) ส่วน KMP/Z ใช้เมื่อต้องการความแน่นอน 100% หรือโครงสร้าง border/period</p>
+  <div class="page-progress" id="page-progress"></div>
+
+  <nav class="toc"><b>ในหน้านี้</b><ol>
+    <li><a href="#hash">Polynomial hashing</a></li>
+    <li><a href="#kmp">Prefix function (KMP)</a></li>
+    <li><a href="#z">Z-function</a></li>
+    <li><a href="#trie">Trie</a></li>
+    <li><a href="#manacher">Manacher</a></li>
+    <li><a href="#next">ไปต่อ</a></li>
+    <li><a href="#practice">แบบฝึกหัด</a></li>
+  </ol></nav>
+
+  <h2 id="hash">1. Polynomial hashing</h2>
+  <p>hash(s) = s<sub>0</sub>B<sup>n−1</sup> + s<sub>1</sub>B<sup>n−2</sup> + … + s<sub>n−1</sub> (mod M) · เก็บ prefix hash แล้ว hash ของ substring ใดก็ได้คำนวณใน O(1) · ใช้ M = 2<sup>61</sup>−1 และ B สุ่ม เพื่อไม่ให้โดน anti-hash test และโอกาสชนต่ำมาก</p>
+<pre><code>using ull = unsigned long long;
+const ull HM = (1ULL &lt;&lt; 61) - 1;
+ull hmul(ull a, ull b) {
+    __uint128_t c = (__uint128_t)a * b;
+    ull r = (ull)(c &amp; HM) + (ull)(c &gt;&gt; 61);
+    return r &gt;= HM ? r - HM : r;
+}
+const ull HB = mt19937_64(chrono::steady_clock::now().time_since_epoch().count())() % (HM - 1000) + 500;
+
+struct Hash {
+    vector&lt;ull&gt; h, pw;
+    Hash(const string &amp;s) : h(s.size() + 1, 0), pw(s.size() + 1, 1) {
+        for (size_t i = 0; i &lt; s.size(); i++) {
+            h[i + 1] = hmul(h[i], HB) + (unsigned char)s[i];
+            if (h[i + 1] &gt;= HM) h[i + 1] -= HM;
+            pw[i + 1] = hmul(pw[i], HB);
+        }
+    }
+    ull get(int l, int r) {          // hash ของ s[l, r)
+        ull x = h[r] + HM - hmul(h[l], pw[r - l]);
+        return x &gt;= HM ? x - HM : x;
+    }
+};</code></pre>
+  <div class="box idea"><span class="label">สิ่งที่ hashing ทำได้</span>
+  <ul>
+    <li>เทียบ substring สองตัวว่าเท่ากันไหม O(1)</li>
+    <li><b>LCP</b> ของสอง suffix: binary search ความยาว O(log n) → เปรียบเทียบ lexicographic ของ substring ได้ใน O(log n)</li>
+    <li>palindrome check: hash ของ s เทียบกับ hash ของ reverse(s) ในช่วงที่สมมาตร</li>
+    <li>"substring ยาว k ที่ซ้ำกันมีไหม" → ใส่ hash ทุกตัวใน set/sort, แล้ว binary search บน k</li>
+    <li>hash ของ multiset/set: ผลรวมของค่าสุ่มที่ map ให้แต่ละสมาชิก</li>
+  </ul></div>
+  <div class="box warn">อย่าใช้ M = 2<sup>64</sup> (ปล่อย overflow) — มี test แบบ Thue–Morse ที่ทำให้ชนแน่นอน และอย่าใช้ base คงที่ที่คนอื่นเดาได้ (สำคัญน้อยใน ICPC แต่เป็นนิสัยที่ดี)</div>
+
+  <h2 id="kmp">2. Prefix function (KMP)</h2>
+  <p><code>pi[i]</code> = ความยาว prefix ที่ยาวที่สุดของ <code>s[0..i]</code> ที่เป็น suffix ด้วย (ไม่นับตัวเอง)</p>
+<pre><code>vector&lt;int&gt; prefix_function(const string &amp;s) {
+    int n = s.size(); vector&lt;int&gt; pi(n, 0);
+    for (int i = 1; i &lt; n; i++) {
+        int j = pi[i - 1];
+        while (j &gt; 0 &amp;&amp; s[i] != s[j]) j = pi[j - 1];
+        if (s[i] == s[j]) j++;
+        pi[i] = j;
+    }
+    return pi;
+}
+// ค้นหา pattern p ใน text t: คำนวณบน p + '#' + t
+// ตำแหน่ง i ที่ pi[i] == |p| คือจุดจบของ occurrence
+// Borders ทั้งหมดของ s: เริ่ม k = pi[n-1] แล้ว k = pi[k-1] ซ้ำจน 0
+// คาบที่สั้นที่สุด: n - pi[n-1] (เป็นคาบสมบูรณ์ถ้าหาร n ลงตัว)</code></pre>
+
+  <h2 id="z">3. Z-function</h2>
+  <p><code>z[i]</code> = ความยาว prefix ร่วมที่ยาวที่สุดระหว่าง <code>s</code> กับ <code>s[i..]</code></p>
+<pre><code>vector&lt;int&gt; z_function(const string &amp;s) {
+    int n = s.size(); vector&lt;int&gt; z(n, 0);
+    for (int i = 1, l = 0, r = 0; i &lt; n; i++) {
+        if (i &lt; r) z[i] = min(r - i, z[i - l]);
+        while (i + z[i] &lt; n &amp;&amp; s[z[i]] == s[i + z[i]]) z[i]++;
+        if (i + z[i] &gt; r) l = i, r = i + z[i];
+    }
+    return z;   // z[0] = 0 ตามธรรมเนียม (จริงๆ คือ n)
+}
+// คาบ: i เป็นคาบ ⇔ i + z[i] == n</code></pre>
+
+  <h2 id="trie">4. Trie</h2>
+<pre><code>struct Trie {
+    vector&lt;array&lt;int, 26&gt;&gt; nx; vector&lt;int&gt; endc;
+    Trie() { nx.push_back({}); nx[0].fill(-1); endc.push_back(0); }
+    void insert(const string &amp;s) {
+        int v = 0;
+        for (char ch : s) {
+            int c = ch - 'a';
+            if (nx[v][c] == -1) {
+                nx[v][c] = nx.size();
+                nx.push_back({}); nx.back().fill(-1); endc.push_back(0);
+            }
+            v = nx[v][c];
+        }
+        endc[v]++;
+    }
+};
+// Word Combinations: dp[i] = จำนวนวิธีแบ่ง s[i..]; เดิน trie จาก i ไปทางขวา ทุก node ที่ endc &gt; 0 ที่ตำแหน่ง j → dp[i] += dp[j+1]
+// Binary trie (bit 30→0): หา max XOR ของคู่ใน O(n · 30)</code></pre>
+
+  <h2 id="manacher">5. Manacher (palindrome ทุกจุดศูนย์กลาง O(n))</h2>
+<pre><code>// แทรก '#' เพื่อรวมกรณีความยาวคู่/คี่
+string t = "#";
+for (char c : s) { t += c; t += '#'; }
+int m = t.size(); vector&lt;int&gt; p(m, 0);
+for (int i = 0, l = 0, r = -1; i &lt; m; i++) {
+    int k = (i &gt; r) ? 1 : min(p[l + r - i], r - i + 1);
+    while (i - k &gt;= 0 &amp;&amp; i + k &lt; m &amp;&amp; t[i - k] == t[i + k]) k++;
+    p[i] = k--;
+    if (i + k &gt; r) l = i - k, r = i + k;
+}
+// palindrome ใน s ที่ศูนย์กลาง i ของ t ยาว p[i] - 1
+// เริ่มที่ index (i - (p[i] - 1)) / 2 ใน s</code></pre>
+  <p class="muted small">ถ้าจำ Manacher ไม่ได้ในวันแข่ง: hash + binary search รัศมีแต่ละศูนย์กลาง = O(n log n) ก็มักพอ</p>
+
+  <h2 id="next">6. ไปต่อ</h2>
+  <ul>
+    <li><b>Suffix array + LCP</b> — นับ substring ที่ต่างกัน, substring ซ้ำที่ยาวที่สุด (repo มี <code>challenging_prog/week_10/dvaput.cpp</code>)</li>
+    <li><b>Aho–Corasick</b> — ค้นหาหลาย pattern พร้อมกัน, DP บน automaton</li>
+    <li><b>KMP automaton + DP</b> — นับสตริงยาว n ที่ (ไม่)มี pattern (Required Substring)</li>
+  </ul>
+
+  <h2 id="practice">7. แบบฝึกหัด</h2>
+  <ul class="problems">
+    <li class="must"><a data-cses="1753">String Matching</a><div class="meta">KMP หรือ Z หรือ hash</div></li>
+    <li class="must"><a data-cses="1732">Finding Borders</a><div class="meta">prefix function</div></li>
+    <li class="must"><a data-cses="1733">Finding Periods</a><div class="meta">Z-function</div></li>
+    <li class="must"><a data-cses="1731">Word Combinations</a><div class="meta">trie + DP</div></li>
+    <li><a data-cses="1110">Minimal Rotation</a><div class="meta">hash + LCP compare หรือ Booth</div></li>
+    <li class="must"><a data-cses="1111">Longest Palindrome</a><div class="meta">Manacher</div></li>
+    <li class="hard"><a data-cses="1112">Required Substring</a><div class="meta">KMP automaton + DP</div></li>
+    <li class="hard"><a data-cses="2420">Palindrome Queries</a><div class="meta">hash + BIT</div></li>
+    <li class="hard"><a data-cses="2105">Distinct Substrings</a><div class="meta">suffix array</div></li>
+    <li class="must"><a data-cf="126/B">Password</a><div class="meta">prefix function / Z</div></li>
+    <li><a data-cf="1200/E">Compress Words</a><div class="meta">KMP หรือ hash ระวังเวลา</div></li>
+    <li class="hard"><a data-cf="271/D">Good Substrings</a><div class="meta">trie หรือ hash</div></li>
+  </ul>
+  <div class="box exit"><span class="label">ผ่านบทนี้เมื่อ</span>มี template hashing ที่ใช้ได้ทันที, เขียน prefix function ได้จากความจำ และรู้ว่าเมื่อไหร่ใช้ hash (ยืดหยุ่น) vs KMP/Z (แน่นอน)</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

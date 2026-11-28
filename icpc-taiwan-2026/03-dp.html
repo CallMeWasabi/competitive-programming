@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dynamic Programming</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="03-dp.html">
+<main>
+  <div class="kicker">บทที่ 03</div>
+  <h1>Dynamic Programming</h1>
+  <p class="lead">DP ไม่ได้ฝึกด้วยการจำโจทย์ แต่ฝึกด้วย<b>การนิยาม state ให้เป็น</b> หน้านี้สอนกระบวนการคิดก่อน แล้วค่อยไล่ pattern มาตรฐานที่โผล่ใน ICPC ซ้ำๆ</p>
+  <div class="page-progress" id="page-progress"></div>
+
+  <nav class="toc"><b>ในหน้านี้</b><ol>
+    <li><a href="#process">กระบวนการออกแบบ DP</a></li>
+    <li><a href="#coins">Counting & coin problems</a></li>
+    <li><a href="#knap">Knapsack</a></li>
+    <li><a href="#lis">LIS O(n log n)</a></li>
+    <li><a href="#grid">Grid / สองสาย (LCS, edit distance)</a></li>
+    <li><a href="#interval">Interval DP</a></li>
+    <li><a href="#bitmask">Bitmask DP</a></li>
+    <li><a href="#digit">Digit DP</a></li>
+    <li><a href="#next">ไปต่อ</a></li>
+    <li><a href="#practice">แบบฝึกหัด</a></li>
+  </ol></nav>
+
+  <h2 id="process">1. กระบวนการออกแบบ DP (ทำบนกระดาษทุกครั้ง)</h2>
+  <ol>
+    <li><b>State:</b> เขียนเป็นประโยค "dp[i][j] = <i>คำตอบ</i> ของ <i>ปัญหาย่อย</i> ที่ ..." ถ้าเขียนประโยคนี้ไม่ได้ชัด อย่าเริ่มพิมพ์</li>
+    <li><b>ถามว่า state พอไหม:</b> การตัดสินใจขั้นต่อไปต้องรู้อะไรบ้างจากอดีต? สิ่งที่ต้องรู้ทั้งหมดต้องอยู่ใน state</li>
+    <li><b>Transition:</b> "การตัดสินใจสุดท้าย" มีกี่แบบ แต่ละแบบมาจาก state ไหน</li>
+    <li><b>Base case และลำดับการคำนวณ:</b> state ที่ถูกอ้างอิงต้องคำนวณก่อน</li>
+    <li><b>Complexity:</b> (จำนวน state) × (ค่า transition ต่อ state) ต้องอยู่ใน budget — ถ้าไม่ผ่าน ลองลดมิติหรือหาทางทำ transition เร็วขึ้น</li>
+  </ol>
+<pre><code>// Top-down (memoization): เขียนง่าย ตรงกับความคิด แต่ recursion ลึกอาจ stack overflow
+ll memo[N]; bool vis[N];
+ll f(int i) {
+    if (i == 0) return 1;
+    if (vis[i]) return memo[i];
+    vis[i] = true;
+    ll r = 0;
+    for (int d = 1; d &lt;= 6 &amp;&amp; d &lt;= i; d++) r = (r + f(i - d)) % MOD;
+    return memo[i] = r;
+}
+
+// Bottom-up: เร็วกว่า, ลด memory ได้ (เก็บแค่แถวก่อนหน้า)
+vector&lt;ll&gt; dp(n + 1, 0); dp[0] = 1;
+for (int i = 1; i &lt;= n; i++)
+    for (int d = 1; d &lt;= 6 &amp;&amp; d &lt;= i; d++) dp[i] = (dp[i] + dp[i - d]) % MOD;</code></pre>
+
+  <h2 id="coins">2. Counting & coin problems</h2>
+  <p>ความต่างเล็กๆ ที่คนพลาดบ่อย: <b>นับแบบสนใจลำดับ</b> vs <b>ไม่สนใจลำดับ</b> เกิดจากลำดับของ loop</p>
+<pre><code>// นับลำดับ (1+2 กับ 2+1 นับต่างกัน) — Coin Combinations I
+for (int s = 1; s &lt;= X; s++)
+    for (int c : coins) if (c &lt;= s) dp[s] = (dp[s] + dp[s - c]) % MOD;
+
+// นับชุด (ไม่สนลำดับ) — Coin Combinations II: เหรียญอยู่ loop นอก
+for (int c : coins)
+    for (int s = c; s &lt;= X; s++) dp[s] = (dp[s] + dp[s - c]) % MOD;
+
+// จำนวนเหรียญน้อยที่สุด
+vector&lt;int&gt; best(X + 1, INF); best[0] = 0;
+for (int s = 1; s &lt;= X; s++)
+    for (int c : coins) if (c &lt;= s) best[s] = min(best[s], best[s - c] + 1);</code></pre>
+
+  <h2 id="knap">3. Knapsack</h2>
+<pre><code>// 0/1 knapsack: dp[w] = มูลค่ามากที่สุดเมื่อใช้น้ำหนัก &lt;= w
+vector&lt;ll&gt; dp(W + 1, 0);
+for (int i = 0; i &lt; n; i++)
+    for (int w = W; w &gt;= wt[i]; w--)          // วนถอยหลัง: ของแต่ละชิ้นใช้ได้ครั้งเดียว
+        dp[w] = max(dp[w], dp[w - wt[i]] + val[i]);
+// unbounded (ใช้ซ้ำได้): วน w ไปข้างหน้าแทน
+
+// subset sum ด้วย bitset: เร็วขึ้น ~64 เท่า
+bitset&lt;100001&gt; can; can[0] = 1;
+for (int x : a) can |= can &lt;&lt; x;</code></pre>
+  <div class="box idea"><span class="label">เมื่อ W ใหญ่แต่ value เล็ก</span>สลับมิติ: <code>dp[v]</code> = น้ำหนักน้อยที่สุดที่ได้มูลค่า v แล้วหา v มากที่สุดที่ <code>dp[v] &lt;= W</code> (AtCoder DP E) — การ "สลับว่าอะไรเป็น index อะไรเป็นค่า" เป็นทักษะสำคัญ</div>
+
+  <h2 id="lis">4. Longest Increasing Subsequence O(n log n)</h2>
+<pre><code>// t[k] = ค่าท้ายที่เล็กที่สุดของ increasing subsequence ยาว k+1
+vector&lt;int&gt; t;
+for (int x : a) {
+    auto it = lower_bound(t.begin(), t.end(), x);  // strictly increasing
+    // non-decreasing: ใช้ upper_bound
+    if (it == t.end()) t.push_back(x); else *it = x;
+}
+int lis = t.size();</code></pre>
+  <p>หลายโจทย์แปลงเป็น LIS ได้: กล่องซ้อนกันสองมิติ (sort มิติแรก แล้วหา LIS มิติที่สอง — ถ้ามิติแรกเท่ากันให้ sort มิติที่สองจากมากไปน้อย), จำนวนลบน้อยสุดให้ array เรียง = n − LIS</p>
+
+  <h2 id="grid">5. Grid DP และ DP บนสองสาย</h2>
+<pre><code>// Edit distance: dp[i][j] = จำนวน operation น้อยสุดเปลี่ยน a[0..i) เป็น b[0..j)
+for (int i = 0; i &lt;= n; i++) for (int j = 0; j &lt;= m; j++) {
+    if (i == 0 || j == 0) { dp[i][j] = i + j; continue; }
+    dp[i][j] = min({ dp[i-1][j] + 1,                        // ลบ
+                     dp[i][j-1] + 1,                        // เพิ่ม
+                     dp[i-1][j-1] + (a[i-1] != b[j-1]) });  // แทน / ตรงกัน
+}
+// LCS: dp[i][j] = (a[i-1]==b[j-1]) ? dp[i-1][j-1]+1 : max(dp[i-1][j], dp[i][j-1])
+// ต้องการตัวคำตอบจริง: ย้อนจาก dp[n][m] กลับไปดูว่ามาจาก transition ไหน</code></pre>
+
+  <h2 id="interval">6. Interval DP</h2>
+  <p>State <code>dp[l][r]</code> = คำตอบของช่วง <code>[l, r]</code> คำนวณเรียงตาม<b>ความยาวช่วง</b>จากสั้นไปยาว ใช้กับเกมเอาของจากสองฝั่ง, รวมกองของ (Slimes / matrix chain), ตัด/รวม palindrome — ปกติ O(n<sup>2</sup>) state × O(n) transition = O(n<sup>3</sup>) ใช้ได้เมื่อ n ≤ ~400</p>
+<pre><code>// Removal Game: dp[l][r] = (คะแนนเรา - คะแนนคู่แข่ง) ที่ดีที่สุดเมื่อเหลือ a[l..r] และเป็นตาเรา
+for (int l = n - 1; l &gt;= 0; l--)
+    for (int r = l; r &lt; n; r++)
+        dp[l][r] = (l == r) ? a[l] : max(a[l] - dp[l+1][r], a[r] - dp[l][r-1]);
+// คะแนนผู้เล่นแรก = (sum + dp[0][n-1]) / 2
+
+// รวมกอง (Slimes): dp[l][r] = min over k of dp[l][k] + dp[k+1][r] + sum(l..r)
+for (int len = 2; len &lt;= n; len++)
+    for (int l = 0; l + len - 1 &lt; n; l++) {
+        int r = l + len - 1; dp[l][r] = INF;
+        for (int k = l; k &lt; r; k++)
+            dp[l][r] = min(dp[l][r], dp[l][k] + dp[k+1][r] + S(l, r));
+    }</code></pre>
+
+  <h2 id="bitmask">7. Bitmask DP</h2>
+  <p>สัญญาณ: n ≤ 20 และต้องจำว่า "ใช้อะไรไปแล้วบ้าง" State = subset ที่ใช้ไปแล้ว (+ ตัวสุดท้ายถ้าลำดับมีผล)</p>
+<pre><code>// TSP / Hamiltonian path: dp[mask][v] = ต้นทุนน้อยสุดที่เยี่ยมชม mask แล้วจบที่ v
+vector&lt;vector&lt;ll&gt;&gt; dp(1 &lt;&lt; n, vector&lt;ll&gt;(n, INF));
+dp[1][0] = 0;                                     // เริ่มที่ 0
+for (int mask = 1; mask &lt; (1 &lt;&lt; n); mask++)
+    for (int v = 0; v &lt; n; v++) {
+        if (!(mask &gt;&gt; v &amp; 1) || dp[mask][v] == INF) continue;
+        for (int u = 0; u &lt; n; u++) if (!(mask &gt;&gt; u &amp; 1))
+            dp[mask | 1 &lt;&lt; u][u] = min(dp[mask | 1 &lt;&lt; u][u], dp[mask][v] + cost[v][u]);
+    }
+// O(2^n · n^2): n = 20 → ~4·10^8 ช้าไปหน่อย ใช้ array ธรรมดา + loop แน่นๆ จะทัน</code></pre>
+  <p>รูปแบบอื่น: <b>"แบ่งเป็นกลุ่มน้อยที่สุด"</b> (Elevator Rides) ใช้ <code>dp[mask] = {จำนวนรอบ, น้ำหนักรอบสุดท้าย}</code> · <b>broken profile</b> (Counting Tilings) ใช้ mask แทนรอยต่อระหว่างคอลัมน์</p>
+
+  <h2 id="digit">8. Digit DP</h2>
+  <p>สัญญาณ: "นับจำนวนเลขใน [L, R] ที่มีคุณสมบัติเกี่ยวกับหลัก" และ R ถึง 10<sup>18</sup> — คำนวณ <code>f(R) − f(L−1)</code> โดย <code>f(N)</code> = จำนวนใน [0, N]</p>
+<pre><code>string s; ll memo[20][11][2][2]; bool seen[20][11][2][2];
+// pos: หลักที่กำลังเลือก, prev: หลักก่อนหน้า (10 = ยังไม่มี), tight: ยังติดขอบ N อยู่ไหม, started: เริ่มเลขแล้วหรือยัง
+ll go(int pos, int prev, bool tight, bool started) {
+    if (pos == (int)s.size()) return 1;
+    ll &amp;res = memo[pos][prev][tight][started];
+    if (seen[pos][prev][tight][started]) return res;
+    seen[pos][prev][tight][started] = true; res = 0;
+    int lim = tight ? s[pos] - '0' : 9;
+    for (int d = 0; d &lt;= lim; d++) {
+        if (started &amp;&amp; d == prev) continue;      // เงื่อนไขตัวอย่าง: ห้ามหลักติดกันซ้ำ (CSES Counting Numbers)
+        bool ns = started || d != 0;
+        res += go(pos + 1, ns ? d : 10, tight &amp;&amp; d == lim, ns);
+    }
+    return res;
+}
+ll f(ll N) { if (N &lt; 0) return 0; s = to_string(N); memset(seen, 0, sizeof seen); return go(0, 10, true, false); }</code></pre>
+
+  <h2 id="next">9. ไปต่อเมื่อพื้นฐานแน่นแล้ว</h2>
+  <ul>
+    <li><b>DP บน tree</b> และ rerooting — อยู่ใน <a href="05-trees-ds.html#treedp">บทที่ 05</a></li>
+    <li><b>DP บน DAG</b> (longest path, นับเส้นทาง) — topological order ใน <a href="04-graphs.html#topo">บทที่ 04</a></li>
+    <li><b>DP + data structure:</b> transition เป็น min/sum ของช่วง → segment tree/Fenwick (เช่น LIS แบบมีน้ำหนัก, Projects)</li>
+    <li><b>Optimization:</b> Convex Hull Trick, divide & conquer DP, Knuth — ดู <code>docs/advance_cp_topic.md</code> ใน repo นี้</li>
+  </ul>
+
+  <h2 id="practice">10. แบบฝึกหัด</h2>
+  <ul class="problems">
+    <li class="repo"><a data-cses="1633">Dice Combinations</a></li>
+    <li class="must"><a data-cses="1634">Minimizing Coins</a></li>
+    <li class="must"><a data-cses="1635">Coin Combinations I</a></li>
+    <li class="must"><a data-cses="1636">Coin Combinations II</a><div class="meta">ลำดับ loop / memory limit</div></li>
+    <li><a data-cses="1637">Removing Digits</a></li>
+    <li><a data-cses="1638">Grid Paths (DP)</a></li>
+    <li class="repo must"><a data-cses="1158">Book Shop</a><div class="meta">0/1 knapsack</div></li>
+    <li class="must"><a data-cses="1746">Array Description</a><div class="meta">state ที่ต้องจำค่าสุดท้าย</div></li>
+    <li class="hard"><a data-cses="2413">Counting Towers</a><div class="meta">ออกแบบ state จากรูปร่าง</div></li>
+    <li class="repo must"><a data-cses="1639">Edit Distance</a></li>
+    <li><a data-cses="1744">Rectangle Cutting</a></li>
+    <li class="repo"><a data-cses="1745">Money Sums</a></li>
+    <li class="repo must"><a data-cses="1097">Removal Game</a><div class="meta">interval DP / minimax</div></li>
+    <li class="repo"><a data-cses="1093">Two Sets II</a></li>
+    <li class="must"><a data-cses="1145">Increasing Subsequence</a><div class="meta">LIS n log n</div></li>
+    <li class="must"><a data-cses="1140">Projects</a><div class="meta">sort + DP + binary search / compression</div></li>
+    <li class="must"><a data-cses="1653">Elevator Rides</a><div class="meta">bitmask DP</div></li>
+    <li class="must"><a data-cses="1690">Hamiltonian Flights</a><div class="meta">bitmask DP บนกราฟ</div></li>
+    <li class="hard"><a data-cses="2181">Counting Tilings</a><div class="meta">broken profile</div></li>
+    <li class="must"><a data-cses="2220">Counting Numbers</a><div class="meta">digit DP</div></li>
+    <li><a data-ac="dp/dp_e">Educational DP E — Knapsack 2</a><div class="meta">สลับมิติ</div></li>
+    <li class="must"><a data-ac="dp/dp_f">Educational DP F — LCS</a><div class="meta">ย้อนหาคำตอบจริง</div></li>
+    <li><a data-ac="dp/dp_g">Educational DP G — Longest Path</a><div class="meta">DP บน DAG</div></li>
+    <li><a data-ac="dp/dp_l">Educational DP L — Deque</a></li>
+    <li class="must"><a data-ac="dp/dp_n">Educational DP N — Slimes</a><div class="meta">interval DP</div></li>
+    <li class="hard"><a data-ac="dp/dp_o">Educational DP O — Matching</a><div class="meta">bitmask DP</div></li>
+    <li class="hard"><a data-ac="dp/dp_s">Educational DP S — Digit Sum</a></li>
+  </ul>
+  <div class="box exit"><span class="label">ผ่านบทนี้เมื่อ</span>อ่านโจทย์ DP ระดับ CSES แล้วเขียนประโยคนิยาม state + transition ได้ภายใน 10 นาที และรู้ทันทีจาก constraint ว่าควรเป็น DP แบบไหน (n ≤ 20 → bitmask, n ≤ 500 → interval, R ≤ 10<sup>18</sup> → digit)</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C++ Contest Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="01-foundations.html">
+<main>
+  <div class="kicker">บทที่ 01</div>
+  <h1>C++ & พื้นฐานการแข่ง</h1>
+  <p class="lead">ก่อนเรียน algorithm ใดๆ ต้องแน่ใจว่า "เครื่องมือ" ไม่ทำให้เสียคะแนน: template, การประมาณ complexity, overflow และ STL ที่ใช้คล่องโดยไม่ต้องคิด</p>
+  <div class="page-progress" id="page-progress"></div>
+
+  <nav class="toc"><b>ในหน้านี้</b><ol>
+    <li><a href="#template">Template ที่ใช้ทุกข้อ</a></li>
+    <li><a href="#complexity">Complexity budget</a></li>
+    <li><a href="#overflow">Overflow & ชนิดข้อมูล</a></li>
+    <li><a href="#stl">STL ที่ต้องคล่อง</a></li>
+    <li><a href="#bits">Bit manipulation</a></li>
+    <li><a href="#search">Complete search</a></li>
+    <li><a href="#io">I/O และกับดักรูปแบบ input</a></li>
+    <li><a href="#practice">แบบฝึกหัด</a></li>
+  </ol></nav>
+
+  <h2 id="template">1. Template ที่ใช้ทุกข้อ</h2>
+  <p>ใน ICPC พิมพ์ template ซ้ำทุกข้อ ดังนั้นต้องสั้นพอจะพิมพ์ในไม่กี่วินาที และไม่มี macro แปลกๆ ที่เพื่อนร่วมทีมอ่านไม่ออก</p>
+<pre><code>#include &lt;bits/stdc++.h&gt;
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin &gt;&gt; n;
+    vector&lt;ll&gt; a(n);
+    for (auto &amp;x : a) cin &gt;&gt; x;
+
+    ll ans = 0;
+    // ... แก้โจทย์ตรงนี้
+    cout &lt;&lt; ans &lt;&lt; '\n';   // ใช้ '\n' ไม่ใช่ endl (endl flush ทุกครั้ง ช้ามาก)
+}</code></pre>
+  <div class="box idea"><span class="label">Compile flags ตอนซ้อม</span>
+  ใช้ <code>g++ -std=c++17 -O2 -Wall -Wextra -fsanitize=address,undefined -D_GLIBCXX_DEBUG a.cpp</code> ตอนทดสอบบนเครื่องตัวเอง — จับ out-of-bounds, signed overflow และ iterator ผิดได้ทันที (ไม่ต้องเปิดตอน submit) บน Windows/MinGW sanitizer อาจใช้ไม่ได้ ให้ใช้ WSL หรือแค่ <code>-D_GLIBCXX_DEBUG</code></div>
+
+  <h2 id="complexity">2. Complexity budget</h2>
+  <p>กฎหยาบ: C++ ทำ operation ง่ายๆ ได้ประมาณ <b>10<sup>8</sup> ครั้งต่อวินาที</b> ดู constraint ก่อนคิดวิธี — constraint คือ hint ที่ใหญ่ที่สุดในโจทย์</p>
+  <div class="table-wrap"><table>
+    <tr><th>n สูงสุด</th><th>Complexity ที่ยอมรับได้</th><th>เทคนิคที่มักเป็นคำตอบ</th></tr>
+    <tr><td>≤ 10–11</td><td>O(n!)</td><td>ลองทุก permutation</td></tr>
+    <tr><td>≤ 20–25</td><td>O(2<sup>n</sup>·n)</td><td>subset/bitmask, bitmask DP</td></tr>
+    <tr><td>≤ 40</td><td>O(2<sup>n/2</sup>)</td><td>meet in the middle</td></tr>
+    <tr><td>≤ 500</td><td>O(n<sup>3</sup>)</td><td>Floyd–Warshall, interval DP</td></tr>
+    <tr><td>≤ 5 000</td><td>O(n<sup>2</sup>)</td><td>DP 2 มิติ, ลองทุกคู่</td></tr>
+    <tr><td>≤ 2·10<sup>5</sup> – 10<sup>6</sup></td><td>O(n log n) หรือ O(n)</td><td>sort, binary search, segment tree, two pointers</td></tr>
+    <tr><td>≥ 10<sup>9</sup></td><td>O(log n) หรือ O(√n)</td><td>สูตร, binary search, fast power, matrix power</td></tr>
+  </table></div>
+  <div class="box warn">ถ้ามี <b>หลาย test case</b> ให้ดูว่าโจทย์รับประกัน "ผลรวม n ทุกเคส ≤ ..." หรือไม่ ถ้าไม่มี ต้องคูณจำนวนเคสเข้าไปด้วย และอย่า <code>memset</code> array ขนาด 10<sup>6</sup> ทุกเคส</div>
+
+  <h2 id="overflow">3. Overflow & ชนิดข้อมูล</h2>
+  <ul>
+    <li><code>int</code> เก็บได้ประมาณ ±2.1·10<sup>9</sup>, <code>long long</code> ประมาณ ±9.2·10<sup>18</sup> — ถ้าผลรวม/ผลคูณอาจเกิน 2·10<sup>9</sup> ใช้ <code>long long</code> ไปเลย</li>
+    <li><code>int a = 1e9, b = 1e9; long long c = a * b;</code> <b>ผิด</b> เพราะคูณเป็น int ก่อน ต้องเขียน <code>1LL * a * b</code></li>
+    <li><code>accumulate(v.begin(), v.end(), 0)</code> สะสมเป็น int — ใช้ <code>0LL</code></li>
+    <li><code>v.size()</code> เป็น unsigned: <code>v.size() - 1</code> เมื่อ v ว่างจะได้เลขมหาศาล ใช้ <code>(int)v.size()</code></li>
+    <li>ค่า infinity: <code>const ll INF = 4e18;</code> ระวัง <code>INF + w</code> overflow → ใช้ <code>1e18</code> หรือเช็คก่อนบวก</li>
+    <li>เกิน long long แต่ไม่เกิน ~1.7·10<sup>38</sup>: <code>__int128</code> (พิมพ์ออกเองต้องแปลงเป็น string)</li>
+    <li>Floating point: ใช้ <code>long double</code> และหลีกเลี่ยงถ้าทำเป็นจำนวนเต็มได้ (เช่น เปรียบเทียบ <code>a/b &lt; c/d</code> ด้วย <code>a*d &lt; c*b</code>) พิมพ์ด้วย <code>cout &lt;&lt; fixed &lt;&lt; setprecision(10)</code></li>
+  </ul>
+
+  <h2 id="stl">4. STL ที่ต้องคล่อง</h2>
+<pre><code>// sort แบบกำหนดเอง: เรียงจากมากไปน้อย ถ้าเท่ากันเรียงตาม index
+sort(v.begin(), v.end(), [](const auto &amp;a, const auto &amp;b) {
+    if (a.first != b.first) return a.first &gt; b.first;
+    return a.second &lt; b.second;           // comparator ต้องเป็น strict (&lt; ไม่ใช่ &lt;=)
+});
+
+// binary search บน vector ที่เรียงแล้ว
+int i = lower_bound(v.begin(), v.end(), x) - v.begin(); // ตัวแรกที่ &gt;= x
+int j = upper_bound(v.begin(), v.end(), x) - v.begin(); // ตัวแรกที่ &gt;  x
+int cnt = j - i;                                         // จำนวนตัวที่ == x
+
+// set / multiset: เรียงตลอด, insert/erase/find O(log n)
+multiset&lt;int&gt; ms = {5, 1, 5, 3};
+ms.erase(ms.find(5));      // ลบ 5 แค่ตัวเดียว  (ms.erase(5) ลบทุกตัว!)
+auto it = ms.lower_bound(4); // ตัวแรก &gt;= 4  → ใช้ ms.lower_bound ไม่ใช่ std::lower_bound (นั่น O(n))
+int mx = *ms.rbegin();
+
+// map: นับความถี่ / coordinate compression
+map&lt;int,int&gt; freq; for (int x : a) freq[x]++;
+
+// priority_queue: default เป็น max-heap
+priority_queue&lt;int&gt; maxpq;
+priority_queue&lt;pair&lt;ll,int&gt;, vector&lt;pair&lt;ll,int&gt;&gt;, greater&lt;&gt;&gt; minpq; // min-heap สำหรับ Dijkstra
+
+// coordinate compression
+vector&lt;int&gt; xs = a;
+sort(xs.begin(), xs.end());
+xs.erase(unique(xs.begin(), xs.end()), xs.end());
+for (int &amp;x : a) x = lower_bound(xs.begin(), xs.end(), x) - xs.begin();
+
+// ลองทุก permutation (ต้อง sort ก่อน)
+sort(p.begin(), p.end());
+do { /* ใช้ p */ } while (next_permutation(p.begin(), p.end()));</code></pre>
+  <div class="box idea"><span class="label">เลือกโครงสร้างข้อมูลยังไง</span>
+  ต้องการ "ตัวที่ใกล้ x ที่สุด" หรือ "ลบ/เพิ่มแล้วยังเรียงอยู่" → <code>set</code>/<code>multiset</code> · ต้องการแค่ "ตัวที่มาก/น้อยที่สุด" → <code>priority_queue</code> (เร็วกว่า) · ต้องการ "นับ/ค้นหา key" → <code>map</code> หรือ array ถ้า key เล็ก (array เร็วกว่า map ประมาณ 10 เท่า)</div>
+
+  <h2 id="bits">5. Bit manipulation</h2>
+<pre><code>(x &gt;&gt; i) &amp; 1          // bit ที่ i ของ x
+x | (1 &lt;&lt; i)          // set bit i
+x &amp; ~(1 &lt;&lt; i)         // clear bit i
+x &amp; -x                // bit ต่ำสุดที่เป็น 1 (ใช้ใน Fenwick tree)
+__builtin_popcount(x), __builtin_popcountll(x)   // จำนวน bit 1
+__builtin_ctz(x)      // จำนวน 0 ท้าย (x != 0)
+31 - __builtin_clz(x) // floor(log2 x) (x != 0)
+1LL &lt;&lt; 40             // ต้องใช้ 1LL ถ้า shift เกิน 31
+
+// วนทุก subset ของ n ตัว
+for (int mask = 0; mask &lt; (1 &lt;&lt; n); mask++)
+    for (int i = 0; i &lt; n; i++) if (mask &gt;&gt; i &amp; 1) { /* i อยู่ใน subset */ }
+
+// วนทุก submask ของ mask (รวมทุก mask = O(3^n))
+for (int s = mask; s &gt; 0; s = (s - 1) &amp; mask) { /* ... */ }</code></pre>
+  <p>XOR ใช้บ่อย: <code>a ^ a = 0</code>, prefix xor ใช้หา xor ของช่วงได้เหมือน prefix sum</p>
+
+  <h2 id="search">6. Complete search (brute force)</h2>
+  <p>ถ้า n เล็กพอ brute force คือคำตอบที่ถูกต้องที่สุดและเขียนเร็วที่สุด — และแม้ n ใหญ่ brute force ก็จำเป็นสำหรับ <a href="09-contest.html#stress">stress test</a></p>
+<pre><code>// backtracking: วาง n queens / เลือกของทีละชิ้น
+void rec(int i) {
+    if (i == n) { /* ตรวจคำตอบ */ return; }
+    for (each choice c) {
+        if (!valid(c)) continue;   // pruning ยิ่งตัดเร็ว ยิ่งเร็ว
+        apply(c);
+        rec(i + 1);
+        undo(c);                   // อย่าลืมคืนสถานะ
+    }
+}</code></pre>
+  <p><b>Meet in the middle:</b> n ≈ 40 แบ่งเป็นสองครึ่ง ครึ่งละ 2<sup>20</sup> subset, enumerate ทั้งสองฝั่ง sort ฝั่งหนึ่งแล้ว binary search/two pointers หาคู่ที่ตรงเงื่อนไข</p>
+
+  <h2 id="io">7. I/O และกับดักรูปแบบ input</h2>
+  <ul>
+    <li><b>หลาย test case:</b> reset ตัวแปร global/vector ทุกเคส — bug อันดับหนึ่งใน ICPC</li>
+    <li><b>อ่านจนจบไฟล์:</b> <code>while (cin &gt;&gt; n) { ... }</code></li>
+    <li><b>อ่านทั้งบรรทัด:</b> <code>getline(cin, s)</code> หลังใช้ <code>cin &gt;&gt;</code> ต้อง <code>cin.ignore()</code> ทิ้ง newline ก่อน</li>
+    <li><b>Output format:</b> ICPC ตรวจเข้มกว่าที่คิดในบางโจทย์ ("Case #1: ...", ช่องว่างท้ายบรรทัด, ตัวพิมพ์เล็ก/ใหญ่ของ "YES") ให้ copy ข้อความจาก sample</li>
+    <li><b>Interactive problem:</b> ต้อง <code>cout.flush()</code> หรือใช้ <code>endl</code> หลังทุกคำถาม</li>
+  </ul>
+
+  <h2 id="practice">8. แบบฝึกหัด</h2>
+  <p class="muted small">เป้าหมาย: ข้อง่ายต้อง AC ในครั้งแรก และเขียนเสร็จในเวลาไม่เกิน 10–15 นาที</p>
+  <ul class="problems">
+    <li class="must"><a data-cses="1068">Weird Algorithm</a><div class="meta">ระวัง overflow ระหว่างทาง</div></li>
+    <li><a data-cses="1083">Missing Number</a><div class="meta">ผลรวม หรือ XOR</div></li>
+    <li><a data-cses="1069">Repetitions</a></li>
+    <li class="must"><a data-cses="1094">Increasing Array</a><div class="meta">คำตอบเกิน int</div></li>
+    <li><a data-cses="1070">Permutations</a><div class="meta">constructive: แยกเลขคู่/คี่</div></li>
+    <li class="repo"><a data-cses="1071">Number Spiral</a><div class="meta">หาสูตรแทนการ simulate</div></li>
+    <li><a data-cses="1072">Two Knights</a><div class="meta">นับทั้งหมด ลบคู่ที่โจมตีกัน</div></li>
+    <li class="must"><a data-cses="1092">Two Sets</a><div class="meta">constructive + พิสูจน์ greedy</div></li>
+    <li><a data-cses="1617">Bit Strings</a><div class="meta">fast power mod</div></li>
+    <li><a data-cses="1618">Trailing Zeros</a></li>
+    <li><a data-cses="1754">Coin Piles</a><div class="meta">หาเงื่อนไขทางคณิต</div></li>
+    <li><a data-cses="1755">Palindrome Reorder</a></li>
+    <li class="must"><a data-cses="2205">Gray Code</a><div class="meta">i ^ (i &gt;&gt; 1)</div></li>
+    <li><a data-cses="2165">Tower of Hanoi</a><div class="meta">recursion</div></li>
+    <li class="must"><a data-cses="1622">Creating Strings</a><div class="meta">next_permutation</div></li>
+    <li class="repo must"><a data-cses="1623">Apple Division</a><div class="meta">enumerate subset ด้วย bitmask</div></li>
+    <li class="repo must"><a data-cses="1624">Chessboard and Queens</a><div class="meta">backtracking</div></li>
+    <li class="repo hard"><a data-cses="1625">Grid Path Description</a><div class="meta">pruning ที่ฉลาดถึงจะทันเวลา</div></li>
+    <li class="must"><a data-cses="1621">Distinct Numbers</a><div class="meta">sort + unique หรือ set</div></li>
+  </ul>
+  <div class="box exit"><span class="label">ผ่านบทนี้เมื่อ</span>ทำข้อ "ต้องทำ" ครบ, บอก complexity ที่ต้องการได้ทันทีจาก constraint และไม่เคยโดน WA เพราะ overflow หรือลืม reset ตัวแปรอีก</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

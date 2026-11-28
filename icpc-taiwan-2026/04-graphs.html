@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graph Algorithms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="04-graphs.html">
+<main>
+  <div class="kicker">บทที่ 04</div>
+  <h1>Graph Algorithms</h1>
+  <p class="lead">ICPC แทบทุกชุดมีกราฟอย่างน้อย 2–3 ข้อ และหลายข้อ "ซ่อน" กราฟไว้ (สถานะเกม, grid, ความสัมพันธ์ระหว่างตัวแปร) ทักษะสำคัญคือ<b>แปลงโจทย์เป็นกราฟ</b>: อะไรคือ node อะไรคือ edge น้ำหนักคืออะไร</p>
+  <div class="page-progress" id="page-progress"></div>
+
+  <nav class="toc"><b>ในหน้านี้</b><ol>
+    <li><a href="#choose">เลือก algorithm ยังไง</a></li>
+    <li><a href="#bfs">BFS / DFS / 0-1 BFS</a></li>
+    <li><a href="#sp">Shortest paths</a></li>
+    <li><a href="#dsu">DSU & MST</a></li>
+    <li><a href="#topo">Topological sort & DP บน DAG</a></li>
+    <li><a href="#scc">SCC & 2-SAT</a></li>
+    <li><a href="#bridge">Bridges & articulation points</a></li>
+    <li><a href="#flow">Matching & max flow</a></li>
+    <li><a href="#practice">แบบฝึกหัด</a></li>
+  </ol></nav>
+
+  <h2 id="choose">1. เลือก algorithm ยังไง</h2>
+  <div class="table-wrap"><table>
+    <tr><th>สถานการณ์</th><th>ใช้</th><th>Complexity</th></tr>
+    <tr><td>ระยะทางสั้นสุด, ไม่มีน้ำหนัก (หรือน้ำหนักเท่ากัน)</td><td>BFS</td><td>O(V+E)</td></tr>
+    <tr><td>น้ำหนัก 0 หรือ 1</td><td>0-1 BFS (deque)</td><td>O(V+E)</td></tr>
+    <tr><td>น้ำหนักไม่ติดลบ</td><td>Dijkstra</td><td>O(E log V)</td></tr>
+    <tr><td>มีน้ำหนักติดลบ / หา negative cycle</td><td>Bellman–Ford</td><td>O(VE)</td></tr>
+    <tr><td>ทุกคู่, V ≤ 500</td><td>Floyd–Warshall</td><td>O(V<sup>3</sup>)</td></tr>
+    <tr><td>เชื่อมกันไหม / รวมกลุ่มแบบ online</td><td>DSU</td><td>≈ O(α) ต่อ op</td></tr>
+    <tr><td>ต้นไม้ทอดข้ามต้นทุนต่ำสุด</td><td>Kruskal (sort + DSU)</td><td>O(E log E)</td></tr>
+    <tr><td>ลำดับที่เคารพ dependency / DP บน DAG</td><td>Topological sort</td><td>O(V+E)</td></tr>
+    <tr><td>กราฟมีทิศมี cycle แต่ต้องการ DAG</td><td>SCC → condensation</td><td>O(V+E)</td></tr>
+    <tr><td>เงื่อนไข boolean แบบ "a หรือ b" หลายข้อ</td><td>2-SAT (SCC)</td><td>O(V+E)</td></tr>
+    <tr><td>จับคู่สองฝั่ง / ตัดน้อยสุดให้แยก s,t</td><td>Matching / max flow = min cut</td><td>Dinic</td></tr>
+  </table></div>
+
+  <h2 id="bfs">2. BFS / DFS / 0-1 BFS</h2>
+<pre><code>vector&lt;vector&lt;int&gt;&gt; adj(n);
+for (int i = 0; i &lt; m; i++) { int a, b; cin &gt;&gt; a &gt;&gt; b; a--, b--; adj[a].push_back(b); adj[b].push_back(a); }
+
+// BFS: dist + parent สำหรับย้อนเส้นทาง
+vector&lt;int&gt; dist(n, -1), par(n, -1);
+queue&lt;int&gt; q; dist[s] = 0; q.push(s);              // multi-source: push ทุกจุดเริ่มด้วย dist 0
+while (!q.empty()) {
+    int v = q.front(); q.pop();
+    for (int u : adj[v]) if (dist[u] == -1) {
+        dist[u] = dist[v] + 1; par[u] = v; q.push(u);
+    }
+}
+// ย้อนเส้นทาง: for (int v = t; v != -1; v = par[v]) path.push_back(v); reverse(...)
+
+// Grid: ใช้ทิศทางแบบ array
+const int dr[] = {-1, 1, 0, 0}, dc[] = {0, 0, -1, 1};
+// ตรวจ 0 &lt;= nr &lt; R &amp;&amp; 0 &lt;= nc &lt; C &amp;&amp; g[nr][nc] != '#'
+
+// 0-1 BFS: edge น้ำหนัก 0 push_front, น้ำหนัก 1 push_back
+deque&lt;int&gt; dq; d[s] = 0; dq.push_back(s);
+while (!dq.empty()) {
+    int v = dq.front(); dq.pop_front();
+    for (auto [u, w] : g[v]) if (d[v] + w &lt; d[u]) {
+        d[u] = d[v] + w;
+        w ? dq.push_back(u) : dq.push_front(u);
+    }
+}</code></pre>
+  <div class="box idea"><span class="label">State-space BFS</span>ถ้าการเคลื่อนที่ขึ้นกับข้อมูลเพิ่ม (มีกุญแจไหม, ใช้ส่วนลดไปแล้วไหม, ทิศที่หันอยู่) ให้ node = (ตำแหน่ง, ข้อมูลเพิ่ม) แล้ว BFS/Dijkstra ตามปกติ — Flight Discount คือ Dijkstra บน (เมือง, ใช้คูปองแล้วหรือยัง)</div>
+  <div class="box warn">DFS แบบ recursive ลึก 10<sup>5</sup>–10<sup>6</sup> อาจ stack overflow บน judge ที่ stack เล็ก — ถ้ากราฟเป็นเส้นยาวได้ ให้ใช้ BFS หรือ DFS ด้วย stack เอง (เช็ค stack limit ใน rule ของ regional)</div>
+
+  <h2 id="sp">3. Shortest paths</h2>
+<pre><code>// Dijkstra
+const ll INF = 1e18;
+vector&lt;vector&lt;pair&lt;int,ll&gt;&gt;&gt; g(n);
+vector&lt;ll&gt; dist(n, INF);
+priority_queue&lt;pair&lt;ll,int&gt;, vector&lt;pair&lt;ll,int&gt;&gt;, greater&lt;&gt;&gt; pq;
+dist[s] = 0; pq.push({0, s});
+while (!pq.empty()) {
+    auto [d, v] = pq.top(); pq.pop();
+    if (d != dist[v]) continue;                 // สำคัญ: ข้าม entry เก่า ไม่งั้นอาจ TLE
+    for (auto [u, w] : g[v]) if (d + w &lt; dist[u]) {
+        dist[u] = d + w; pq.push({dist[u], u});
+    }
+}
+
+// Bellman–Ford + ตรวจ negative cycle
+vector&lt;ll&gt; d(n, INF); d[s] = 0;
+for (int it = 0; it &lt; n; it++)
+    for (auto [a, b, w] : edges)
+        if (d[a] != INF &amp;&amp; d[a] + w &lt; d[b]) {
+            d[b] = d[a] + w;
+            if (it == n - 1) { /* ยังผ่อนได้ในรอบที่ n → มี negative cycle ที่ไปถึง b ได้ */ }
+        }
+
+// Floyd–Warshall (d[i][i] = 0, ไม่มี edge = INF)
+for (int k = 0; k &lt; n; k++) for (int i = 0; i &lt; n; i++) for (int j = 0; j &lt; n; j++)
+    if (d[i][k] &lt; INF &amp;&amp; d[k][j] &lt; INF) d[i][j] = min(d[i][j], d[i][k] + d[k][j]);</code></pre>
+  <div class="box warn">โจทย์แบบ High Score: negative cycle มีผลก็ต่อเมื่อ<b>ไปถึงได้จาก s และไปถึง t ได้</b> — ต้องเช็ค reachability ทั้งสองทาง (BFS จาก s บนกราฟปกติ และจาก t บนกราฟกลับทิศ)</div>
+
+  <h2 id="dsu">4. DSU & Minimum Spanning Tree</h2>
+<pre><code>struct DSU {
+    vector&lt;int&gt; p, sz;
+    DSU(int n) : p(n), sz(n, 1) { iota(p.begin(), p.end(), 0); }
+    int find(int x) { while (x != p[x]) x = p[x] = p[p[x]]; return x; }   // path halving
+    bool unite(int a, int b) {
+        a = find(a); b = find(b);
+        if (a == b) return false;
+        if (sz[a] &lt; sz[b]) swap(a, b);
+        p[b] = a; sz[a] += sz[b];
+        return true;
+    }
+};
+
+// Kruskal
+sort(edges.begin(), edges.end(), [](auto &amp;x, auto &amp;y) { return x.w &lt; y.w; });
+DSU dsu(n); ll cost = 0; int used = 0;
+for (auto &amp;e : edges) if (dsu.unite(e.u, e.v)) { cost += e.w; used++; }
+if (used != n - 1) { /* กราฟไม่เชื่อมกัน → IMPOSSIBLE */ }</code></pre>
+  <div class="box idea"><span class="label">DSU ใช้ได้มากกว่า MST</span>ประมวลผล query แบบ <b>offline ย้อนเวลา</b> (ลบ edge = เพิ่ม edge ถ้ามองถอยหลัง), เรียง query ตาม threshold ("ใช้ได้เฉพาะ edge น้ำหนัก ≤ x"), หรือเก็บข้อมูลรวมของกลุ่ม (ขนาด, min, parity สำหรับ bipartite แบบ online)</div>
+
+  <h2 id="topo">5. Topological sort & DP บน DAG</h2>
+<pre><code>// Kahn's algorithm
+vector&lt;int&gt; indeg(n, 0), order;
+for (int v = 0; v &lt; n; v++) for (int u : adj[v]) indeg[u]++;
+queue&lt;int&gt; q;
+for (int v = 0; v &lt; n; v++) if (indeg[v] == 0) q.push(v);
+while (!q.empty()) {
+    int v = q.front(); q.pop(); order.push_back(v);
+    for (int u : adj[v]) if (--indeg[u] == 0) q.push(u);
+}
+if ((int)order.size() != n) { /* มี cycle */ }
+// ต้องการลำดับ lexicographically เล็กสุด → ใช้ priority_queue min-heap แทน queue
+
+// DP บน DAG: เดินตาม order
+for (int v : order) for (int u : adj[v]) ways[u] = (ways[u] + ways[v]) % MOD;</code></pre>
+
+  <h2 id="scc">6. Strongly Connected Components & 2-SAT</h2>
+<pre><code>// Tarjan: comp id ที่ได้เรียงแบบ reverse topological order (comp 0 คือ sink)
+int timer = 0, nc = 0;
+vector&lt;int&gt; tin(n, -1), low(n), comp(n, -1), stk;
+vector&lt;bool&gt; on(n, false);
+function&lt;void(int)&gt; dfs = [&amp;](int v) {
+    tin[v] = low[v] = timer++; stk.push_back(v); on[v] = true;
+    for (int u : adj[v]) {
+        if (tin[u] == -1) { dfs(u); low[v] = min(low[v], low[u]); }
+        else if (on[u]) low[v] = min(low[v], tin[u]);
+    }
+    if (low[v] == tin[v]) {
+        while (true) {
+            int u = stk.back(); stk.pop_back(); on[u] = false; comp[u] = nc;
+            if (u == v) break;
+        }
+        nc++;
+    }
+};
+for (int v = 0; v &lt; n; v++) if (tin[v] == -1) dfs(v);</code></pre>
+  <p><b>2-SAT:</b> ตัวแปร x<sub>i</sub> มี node สองตัว (2i = จริง, 2i+1 = เท็จ) เงื่อนไข (a ∨ b) → edge ¬a→b และ ¬b→a · ไม่มีคำตอบถ้า x กับ ¬x อยู่ SCC เดียวกัน · ถ้ามีคำตอบ ให้ x = จริง เมื่อ <code>comp[2i] &lt; comp[2i+1]</code> (ใช้ลำดับของ Tarjan ด้านบน)</p>
+
+  <h2 id="bridge">7. Bridges & articulation points</h2>
+<pre><code>// adj[v] = {u, edge_id}: ใช้ edge id เพื่อรองรับ multi-edge
+vector&lt;int&gt; tin(n, -1), low(n); int timer = 0;
+vector&lt;int&gt; bridges; vector&lt;bool&gt; cut(n, false);
+function&lt;void(int,int)&gt; dfs = [&amp;](int v, int pe) {
+    tin[v] = low[v] = timer++; int children = 0;
+    for (auto [u, id] : adj[v]) {
+        if (id == pe) continue;
+        if (tin[u] != -1) { low[v] = min(low[v], tin[u]); continue; }
+        dfs(u, id); children++;
+        low[v] = min(low[v], low[u]);
+        if (low[u] &gt; tin[v]) bridges.push_back(id);                 // bridge
+        if (pe != -1 &amp;&amp; low[u] &gt;= tin[v]) cut[v] = true;           // articulation point
+    }
+    if (pe == -1 &amp;&amp; children &gt; 1) cut[v] = true;                  // root
+};</code></pre>
+
+  <h2 id="flow">8. Bipartite matching & max flow</h2>
+  <p>ระดับพื้นฐานต้อง<b>รู้จักโมเดล</b>และมี template ที่เชื่อถือได้ใน notebook: คนกับงาน → matching · ตัด edge น้อยสุดให้ s ไม่ถึง t → min cut = max flow · จำนวน path ที่ไม่ใช้ edge ร่วมกัน → flow ความจุ 1 · node มีความจุ → แยก node เป็น in/out</p>
+<pre><code>struct Dinic {
+    struct E { int to; ll cap; };
+    vector&lt;E&gt; e; vector&lt;vector&lt;int&gt;&gt; g; vector&lt;int&gt; lvl, it;
+    Dinic(int n) : g(n), lvl(n), it(n) {}
+    void add(int u, int v, ll c) {                    // directed edge; ไม่มีทิศ: add(u,v,c), add(v,u,c)
+        g[u].push_back(e.size()); e.push_back({v, c});
+        g[v].push_back(e.size()); e.push_back({u, 0});
+    }
+    bool bfs(int s, int t) {
+        fill(lvl.begin(), lvl.end(), -1); lvl[s] = 0;
+        queue&lt;int&gt; q; q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (int id : g[v]) if (e[id].cap &gt; 0 &amp;&amp; lvl[e[id].to] &lt; 0) {
+                lvl[e[id].to] = lvl[v] + 1; q.push(e[id].to);
+            }
+        }
+        return lvl[t] &gt;= 0;
+    }
+    ll dfs(int v, int t, ll f) {
+        if (v == t) return f;
+        for (int &amp;i = it[v]; i &lt; (int)g[v].size(); i++) {
+            int id = g[v][i], u = e[id].to;
+            if (e[id].cap &gt; 0 &amp;&amp; lvl[u] == lvl[v] + 1) {
+                ll d = dfs(u, t, min(f, e[id].cap));
+                if (d &gt; 0) { e[id].cap -= d; e[id ^ 1].cap += d; return d; }
+            }
+        }
+        return 0;
+    }
+    ll maxflow(int s, int t) {
+        ll flow = 0;
+        while (bfs(s, t)) {
+            fill(it.begin(), it.end(), 0);
+            while (ll f = dfs(s, t, LLONG_MAX)) flow += f;
+        }
+        return flow;
+    }
+};
+// Min cut: หลัง maxflow, node ที่ lvl[v] != -1 (BFS ครั้งสุดท้ายไปถึง) คือฝั่ง s
+// edge (u→v) ที่ u อยู่ฝั่ง s และ v อยู่ฝั่ง t คือ edge ที่ถูกตัด
+// Bipartite matching: s→ซ้ายทุกตัว (cap 1), ซ้าย→ขวา (cap 1), ขวาทุกตัว→t (cap 1)</code></pre>
+  <p class="muted small">repo นี้มี <code>template/networkflow/ford_fulkerson.cpp</code> อยู่แล้ว — Ford–Fulkerson แบบ DFS อาจช้ากับความจุใหญ่ ใช้ Dinic ใน notebook แทน</p>
+
+  <h2 id="practice">9. แบบฝึกหัด</h2>
+  <ul class="problems">
+    <li class="must"><a data-cses="1192">Counting Rooms</a><div class="meta">flood fill</div></li>
+    <li class="repo must"><a data-cses="1193">Labyrinth</a><div class="meta">BFS + ย้อนเส้นทาง</div></li>
+    <li class="must"><a data-cses="1666">Building Roads</a><div class="meta">components / DSU</div></li>
+    <li class="repo"><a data-cses="1667">Message Route</a></li>
+    <li class="repo must"><a data-cses="1668">Building Teams</a><div class="meta">bipartite check</div></li>
+    <li class="must"><a data-cses="1669">Round Trip</a><div class="meta">หา cycle ในกราฟไม่มีทิศ</div></li>
+    <li class="must"><a data-cses="1194">Monsters</a><div class="meta">multi-source BFS</div></li>
+    <li class="must"><a data-cses="1671">Shortest Routes I</a><div class="meta">Dijkstra</div></li>
+    <li class="must"><a data-cses="1672">Shortest Routes II</a><div class="meta">Floyd–Warshall</div></li>
+    <li class="must"><a data-cses="1673">High Score</a><div class="meta">Bellman–Ford + reachability</div></li>
+    <li class="must"><a data-cses="1195">Flight Discount</a><div class="meta">Dijkstra บน state</div></li>
+    <li><a data-cses="1197">Cycle Finding</a><div class="meta">พิมพ์ negative cycle</div></li>
+    <li class="repo"><a data-cses="1196">Flight Routes</a><div class="meta">k shortest</div></li>
+    <li><a data-cses="1678">Round Trip II</a><div class="meta">cycle ในกราฟมีทิศ</div></li>
+    <li class="must"><a data-cses="1679">Course Schedule</a><div class="meta">topological sort</div></li>
+    <li class="must"><a data-cses="1680">Longest Flight Route</a><div class="meta">DP บน DAG</div></li>
+    <li><a data-cses="1681">Game Routes</a></li>
+    <li class="must"><a data-cses="1202">Investigation</a><div class="meta">Dijkstra + นับ/min/max จำนวน edge</div></li>
+    <li class="must"><a data-cses="1675">Road Reparation</a><div class="meta">MST</div></li>
+    <li class="must"><a data-cses="1676">Road Construction</a><div class="meta">DSU เก็บขนาด</div></li>
+    <li><a data-cses="1682">Flight Routes Check</a><div class="meta">strong connectivity</div></li>
+    <li class="must"><a data-cses="1683">Planets and Kingdoms</a><div class="meta">SCC</div></li>
+    <li class="hard"><a data-cses="1684">Giant Pizza</a><div class="meta">2-SAT</div></li>
+    <li class="hard"><a data-cses="1686">Coin Collector</a><div class="meta">SCC + DP บน condensation</div></li>
+    <li class="repo"><a data-cses="1707">Graph Girth</a></li>
+    <li class="must"><a data-cses="2076">Necessary Roads</a><div class="meta">bridges</div></li>
+    <li><a data-cses="2077">Necessary Cities</a><div class="meta">articulation points</div></li>
+    <li class="must"><a data-cses="1694">Download Speed</a><div class="meta">max flow</div></li>
+    <li class="hard"><a data-cses="1695">Police Chase</a><div class="meta">min cut + พิมพ์ edge</div></li>
+    <li class="must"><a data-cses="1696">School Dance</a><div class="meta">bipartite matching</div></li>
+  </ul>
+  <div class="box exit"><span class="label">ผ่านบทนี้เมื่อ</span>เขียน BFS, Dijkstra, DSU, topo sort ได้จากความจำโดยไม่มี bug, แปลงโจทย์ที่ "ไม่ได้บอกว่าเป็นกราฟ" ให้เป็นกราฟได้ และมี template SCC, bridges, Dinic ที่ผ่าน AC อยู่ใน notebook</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

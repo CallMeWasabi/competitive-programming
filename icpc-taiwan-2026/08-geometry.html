@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Computational Geometry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="08-geometry.html">
+<main>
+  <div class="kicker">บทที่ 08</div>
+  <h1>Computational Geometry</h1>
+  <p class="lead">ICPC เอเชียมักมีเรขาคณิตอย่างน้อยหนึ่งข้อ และหลายทีมทิ้งไปเลย — ถ้าทีมคุณมีคนหนึ่งที่มั่นใจกับ <b>cross product</b> และ <b>convex hull</b> นั่นคือแต้มที่ทีมอื่นไม่ได้ กุญแจคือ<b>ใช้จำนวนเต็มทุกครั้งที่ทำได้</b></p>
+  <div class="page-progress" id="page-progress"></div>
+
+  <nav class="toc"><b>ในหน้านี้</b><ol>
+    <li><a href="#point">Point & cross product</a></li>
+    <li><a href="#seg">Segment intersection</a></li>
+    <li><a href="#poly">Polygon: area, point-in-polygon, Pick</a></li>
+    <li><a href="#hull">Convex hull</a></li>
+    <li><a href="#float">ทำงานกับทศนิยม</a></li>
+    <li><a href="#more">เทคนิคอื่นที่ควรรู้จัก</a></li>
+    <li><a href="#practice">แบบฝึกหัด</a></li>
+  </ol></nav>
+
+  <h2 id="point">1. Point & cross product</h2>
+<pre><code>struct P {
+    ll x, y;
+    P operator+(P o) const { return {x + o.x, y + o.y}; }
+    P operator-(P o) const { return {x - o.x, y - o.y}; }
+    P operator*(ll k) const { return {x * k, y * k}; }
+    bool operator&lt;(P o) const { return tie(x, y) &lt; tie(o.x, o.y); }
+    bool operator==(P o) const { return x == o.x &amp;&amp; y == o.y; }
+};
+ll dot(P a, P b)   { return a.x * b.x + a.y * b.y; }
+ll cross(P a, P b) { return a.x * b.y - a.y * b.x; }
+// orientation ของ c เทียบกับเส้น a→b:  &gt;0 ซ้าย (ทวนเข็ม), &lt;0 ขวา, 0 อยู่บนเส้นเดียวกัน
+ll orient(P a, P b, P c) { return cross(b - a, c - a); }
+int sgn(ll v) { return (v &gt; 0) - (v &lt; 0); }</code></pre>
+  <div class="box idea"><span class="label">ทำไม cross product สำคัญที่สุด</span>
+  cross(a, b) = |a||b| sin θ → เครื่องหมายบอก "เลี้ยวซ้ายหรือขวา", ค่าคือสองเท่าของพื้นที่สามเหลี่ยม · dot(a, b) = |a||b| cos θ → เครื่องหมายบอก "มุมแหลม/ป้าน" · ทุกอย่างในหน้านี้สร้างจากสองฟังก์ชันนี้ และไม่ต้องใช้ sin/cos/sqrt เลย</div>
+  <div class="box warn">ถ้าพิกัดถึง 10<sup>9</sup> cross product ถึง ~4·10<sup>18</sup> — ยังพอดี <code>long long</code> แต่ถ้าคูณ cross สองตัวกัน ต้องใช้ <code>__int128</code></div>
+
+  <h2 id="seg">2. Segment intersection</h2>
+<pre><code>bool onSeg(P a, P b, P p) {        // p อยู่บน segment ab (รวมปลาย)
+    return orient(a, b, p) == 0 &amp;&amp;
+           min(a.x, b.x) &lt;= p.x &amp;&amp; p.x &lt;= max(a.x, b.x) &amp;&amp;
+           min(a.y, b.y) &lt;= p.y &amp;&amp; p.y &lt;= max(a.y, b.y);
+}
+bool segInter(P a, P b, P c, P d) {
+    int d1 = sgn(orient(a, b, c)), d2 = sgn(orient(a, b, d));
+    int d3 = sgn(orient(c, d, a)), d4 = sgn(orient(c, d, b));
+    if (d1 * d2 &lt; 0 &amp;&amp; d3 * d4 &lt; 0) return true;   // ตัดกันแบบข้ามจริง
+    return onSeg(a, b, c) || onSeg(a, b, d) || onSeg(c, d, a) || onSeg(c, d, b);
+}
+// จุดตัดของเส้นตรง (ต้องใช้ทศนิยม): a + (b-a) * cross(c-a, d-c) / cross(b-a, d-c)</code></pre>
+
+  <h2 id="poly">3. Polygon: area, point-in-polygon, Pick</h2>
+<pre><code>// Shoelace: สองเท่าของพื้นที่ (เป็นจำนวนเต็มเสมอเมื่อจุดเป็นจำนวนเต็ม)
+ll area2(const vector&lt;P&gt; &amp;p) {
+    ll s = 0; int n = p.size();
+    for (int i = 0; i &lt; n; i++) s += cross(p[i], p[(i + 1) % n]);
+    return llabs(s);          // ถ้าไม่ abs: บวก = ทวนเข็ม, ลบ = ตามเข็ม
+}
+
+// Point in polygon (ray casting): 0 = นอก, 1 = ใน, 2 = บนขอบ
+int inPoly(const vector&lt;P&gt; &amp;p, P q) {
+    int n = p.size(); bool in = false;
+    for (int i = 0; i &lt; n; i++) {
+        P a = p[i], b = p[(i + 1) % n];
+        if (onSeg(a, b, q)) return 2;
+        if ((a.y &gt; q.y) != (b.y &gt; q.y)) {                 // ขอบคร่อมเส้นแนวนอนผ่าน q
+            // เทียบตำแหน่งจุดตัดกับ q.x โดยไม่หาร: ใช้เครื่องหมายของ orient
+            ll o = orient(a, b, q);
+            if ((b.y &gt; a.y) ? o &gt; 0 : o &lt; 0) in = !in;
+        }
+    }
+    return in;
+}
+
+// Pick's theorem: A = I + B/2 - 1
+// B (จุด lattice บนขอบ) = Σ gcd(|dx|, |dy|) ของทุกขอบ
+// I (จุดภายใน) = (area2 - B + 2) / 2</code></pre>
+
+  <h2 id="hull">4. Convex hull (Andrew's monotone chain)</h2>
+<pre><code>vector&lt;P&gt; hull(vector&lt;P&gt; pts) {
+    sort(pts.begin(), pts.end());
+    pts.erase(unique(pts.begin(), pts.end()), pts.end());
+    int n = pts.size();
+    if (n &lt; 3) return pts;
+    vector&lt;P&gt; h(2 * n); int k = 0;
+    for (int i = 0; i &lt; n; i++) {                                   // lower hull
+        while (k &gt;= 2 &amp;&amp; orient(h[k-2], h[k-1], pts[i]) &lt;= 0) k--;  // &lt;= 0: ตัดจุดที่อยู่บนเส้น
+        h[k++] = pts[i];
+    }
+    for (int i = n - 2, t = k + 1; i &gt;= 0; i--) {                  // upper hull
+        while (k &gt;= t &amp;&amp; orient(h[k-2], h[k-1], pts[i]) &lt;= 0) k--;
+        h[k++] = pts[i];
+    }
+    h.resize(k - 1);                                                // ทวนเข็มนาฬิกา
+    return h;
+}
+// ต้องการเก็บจุดที่อยู่บนขอบด้วย (CSES Convex Hull): เปลี่ยน &lt;= 0 เป็น &lt; 0
+// (ระวังกรณีทุกจุดอยู่บนเส้นเดียวกัน — จุดจะถูกใส่ซ้ำ ต้องจัดการแยก)</code></pre>
+  <p>ใช้ hull ต่อ: เส้นรอบรูปของรั้วที่ล้อมทุกจุด, diameter ของชุดจุด (rotating calipers), ตรวจว่าจุดอยู่ใน convex polygon ใน O(log n)</p>
+
+  <h2 id="float">5. ทำงานกับทศนิยม</h2>
+  <ul>
+    <li>ใช้ <code>long double</code> และ <code>const long double EPS = 1e-9;</code> เทียบ <code>a &lt; b - EPS</code> แทน <code>a &lt; b</code></li>
+    <li>เลี่ยง <code>sqrt</code>/<code>atan2</code> ถ้าทำได้: เทียบระยะทางด้วยกำลังสอง, sort ตามมุมด้วย half-plane + cross</li>
+    <li><code>acos(x)</code> เมื่อ x หลุดเป็น 1.0000000001 จะได้ NaN → clamp ก่อน</li>
+    <li>พิมพ์: <code>cout &lt;&lt; fixed &lt;&lt; setprecision(9)</code>; ระวังพิมพ์ <code>-0.000000</code></li>
+    <li>ถ้าพิกัดเป็นจำนวนเต็ม คำตอบที่เป็นพื้นที่มักเป็น "จำนวนเต็มหรือ .5" → ใช้ area2 แล้วพิมพ์เอง</li>
+  </ul>
+
+  <h2 id="more">6. เทคนิคอื่นที่ควรรู้จัก (ชื่อ + ไอเดีย)</h2>
+  <ul>
+    <li><b>Closest pair of points:</b> sort ตาม x, sweep แล้วเก็บ set ของจุดในแถบกว้าง d เรียงตาม y → O(n log n)</li>
+    <li><b>Sweep ตามมุม:</b> sort จุดรอบจุดศูนย์กลางด้วย comparator (แบ่งครึ่งระนาบแล้วใช้ cross)</li>
+    <li><b>วงกลม:</b> จุดอยู่ในวงกลม ⇔ dist² ≤ r² (จำนวนเต็ม), จุดตัดวงกลม-เส้นต้องใช้ทศนิยม</li>
+    <li><b>Rotating calipers:</b> ระยะห่างสูงสุดระหว่างจุดบน hull ใน O(n)</li>
+    <li>แหล่งอ้างอิง: <a href="https://github.com/kth-competitive-programming/kactl/tree/main/content/geometry" target="_blank" rel="noopener">KACTL geometry</a> — template ที่ทดสอบแล้ว เหมาะใส่ notebook</li>
+  </ul>
+
+  <h2 id="practice">7. แบบฝึกหัด</h2>
+  <ul class="problems">
+    <li class="must"><a data-cses="2189">Point Location Test</a><div class="meta">orient</div></li>
+    <li class="must"><a data-cses="2190">Line Segment Intersection</a></li>
+    <li class="must"><a data-cses="2191">Polygon Area</a><div class="meta">shoelace</div></li>
+    <li class="must"><a data-cses="2192">Point in Polygon</a></li>
+    <li><a data-cses="2193">Polygon Lattice Points</a><div class="meta">Pick's theorem</div></li>
+    <li class="hard"><a data-cses="2194">Minimum Euclidean Distance</a><div class="meta">closest pair</div></li>
+    <li class="must"><a data-cses="2195">Convex Hull</a><div class="meta">เก็บจุดบนขอบด้วย</div></li>
+    <li class="hard"><a data-cf="166/B">Polygons</a><div class="meta">จุดใน convex polygon แบบ O(log n)</div></li>
+  </ul>
+  <div class="box exit"><span class="label">ผ่านบทนี้เมื่อ</span>ทำ CSES Geometry ข้อ "ต้องทำ" ครบโดยใช้จำนวนเต็มล้วน และมี struct P + segment intersection + hull ใน notebook ที่ผ่าน AC แล้ว</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

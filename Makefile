@@ -1,5 +1,5 @@
 run: compile
-	./a.exe
+	./a.out
 
 compile: main.cpp
-	g++ main.cpp
+	g++ -std=c++17 -O2 -Wall -Wextra -fsanitize=address,undefined -D_GLIBCXX_DEBUG main.cpp
