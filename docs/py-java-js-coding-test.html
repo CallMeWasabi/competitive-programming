@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C++ to Python, Java &amp; JavaScript: Coding Test Cheat Sheet</title>
+<style>
+:root{--bg:#fff;--fg:#1f2328;--muted:#59636e;--border:#d1d9e0;--code-bg:#f6f8fa;--th-bg:#f0f3f6;--accent:#0969da}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--muted:#9198a1;--border:#3d444d;--code-bg:#161b22;--th-bg:#1c2128;--accent:#4493f8}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:32px 16px 80px}
+h1{font-size:2em;margin:0 0 4px} h2{margin-top:2.2em;padding-bottom:6px;border-bottom:1px solid var(--border)} h3{margin-top:1.6em}
+h1+p{color:var(--muted);margin-top:0}
+code{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code-bg);padding:1px 4px;border-radius:4px}
+pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre code{padding:0;background:none}
+pre:has(code.language-cpp)::before{content:"C++"} pre:has(code.language-python)::before{content:"Python"}
+pre:has(code.language-java)::before{content:"Java"} pre:has(code.language-javascript)::before{content:"JavaScript"}
+pre::before{display:block;font:600 11px/1 sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:8px}
+table{border-collapse:collapse;width:100%;display:block;overflow-x:auto;margin:12px 0}
+th,td{border:1px solid var(--border);padding:6px 10px;vertical-align:top;text-align:left}
+th{background:var(--th-bg)}
+li p{margin:4px 0} ul li[data-checked]{list-style:none;margin-left:-20px}
+a{color:var(--accent)}
+</style></head>
+<body><main>
+<h1 id="c-to-python-java-javascript-coding-test-cheat-sheet">C++ to Python, Java &amp; JavaScript: Coding Test Cheat Sheet</h1>
+<p><time data-atom="date" datetime="2026-11-25">2026-11-25</time></p>
+<h2 id="which-language-to-pick">Which language to pick</h2>
+<p>Pick <strong>Python</strong> as your main language and keep <strong>Java</strong> as a backup for loop-heavy problems. Three questions with partly visible test cases usually reward writing correct code fast over raw speed, and Python is the shortest path from a C++ idea to working code.</p>
+<table><thead><tr><th></th><th>Python</th><th>Java</th><th>JavaScript</th></tr></thead><tbody><tr><td>Closest to C++ mindset</td><td>Low (dynamic, but has every DS you need)</td><td><strong>High</strong> (static types, <code>TreeMap</code>, <code>PriorityQueue</code>)</td><td>Medium</td></tr><tr><td>Speed vs C++</td><td>10–50x slower</td><td>1.5–3x slower</td><td>2–5x slower</td></tr><tr><td>Big integers</td><td>Built in, no overflow ever</td><td><code>long</code> (64-bit) + <code>BigInteger</code></td><td><code>number</code> is a 53-bit double; use <code>BigInt</code></td></tr><tr><td>Ordered set / map (<code>std::set</code>, <code>std::map</code>)</td><td>None built in (use <code>bisect</code> on a sorted list, or <code>sortedcontainers</code> if available)</td><td><code>TreeSet</code>, <code>TreeMap</code></td><td>None built in</td></tr><tr><td>Priority queue</td><td><code>heapq</code> (min-heap)</td><td><code>PriorityQueue</code></td><td><strong>None built in</strong>, write your own heap</td></tr><tr><td>Typing speed</td><td>Fastest</td><td>Slowest (boilerplate)</td><td>Fast</td></tr></tbody></table>
+<p>Rules of thumb:</p>
+<ul><li><p>Default to <strong>Python</strong>. Typical test limits (n up to ~10^5 with O(n log n)) pass comfortably.</p></li><li><p>Switch to <strong>Java</strong> if you need an ordered set/map with <code>lower_bound</code>, or O(n^2) with n around 5,000+, or deep recursion.</p></li><li><p>Avoid <strong>JavaScript</strong> unless you already know it well: no heap, no ordered map, and integer precision traps.</p></li></ul>
+<p>The test may be <strong>function-style</strong> (you fill in <code>def solve(arr)</code> and return a value, like LeetCode) or <strong>stdin/stdout</strong> (like Codeforces). Read the template first; with a function template, do not print or read input yourself.</p>
+<h2 id="program-skeleton-and-fast-io">Program skeleton and fast I/O</h2>
+<p>Each block reads <code>n</code>, then <code>n</code> integers, and prints their sum. Memorize these four; everything else plugs into them.</p>
+<p><strong>C++ (what you know)</strong></p>
+<pre><code class="language-cpp">#include &lt;bits/stdc++.h&gt;
+using namespace std;
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+    int n; cin &gt;&gt; n;
+    vector&lt;long long&gt; a(n);
+    for (auto &amp;x : a) cin &gt;&gt; x;
+    cout &lt;&lt; accumulate(a.begin(), a.end(), 0LL) &lt;&lt; &quot;\n&quot;;
+}</code></pre>
+<p><strong>Python</strong></p>
+<pre><code class="language-python">import sys
+input = sys.stdin.readline          # 5-10x faster than plain input()
+
+def main():
+    n = int(input())
+    a = list(map(int, input().split()))
+    print(sum(a))
+
+main()                              # code inside a function runs faster than globals
+
+# Read EVERYTHING at once (handles any line layout):
+# data = sys.stdin.buffer.read().split(); n = int(data[0])
+# Many output lines: build a list, then  sys.stdout.write(&quot;\n&quot;.join(map(str, ans)))</code></pre>
+<p><strong>Java</strong></p>
+<pre><code class="language-java">import java.util.*;
+import java.io.*;
+
+public class Main {                 // class name must match what the platform expects (often Main or Solution)
+    public static void main(String[] args) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        int n = Integer.parseInt(br.readLine().trim());
+        StringTokenizer st = new StringTokenizer(br.readLine());
+        long sum = 0;
+        for (int i = 0; i &lt; n; i++) sum += Long.parseLong(st.nextToken());
+        PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+        out.println(sum);
+        out.flush();                // forget this = empty output
+    }
+}
+// Scanner is fine for small input (&lt; 10^5 tokens) but ~10x slower than BufferedReader.</code></pre>
+<p><strong>JavaScript (Node.js)</strong></p>
+<pre><code class="language-javascript">const data = require(&quot;fs&quot;).readFileSync(0, &quot;utf8&quot;).split(/\s+/).filter(Boolean);
+let p = 0;
+const next = () =&gt; data[p++];
+
+const n = Number(next());
+let sum = 0;
+for (let i = 0; i &lt; n; i++) sum += Number(next());
+console.log(String(sum));
+// Many output lines: push to an array, then console.log(out.join(&quot;\n&quot;)) once.</code></pre>
+<p><strong>Function-style templates</strong> (LeetCode / HackerRank style) look like this; you only write the body and <code>return</code>:</p>
+<pre><code class="language-python">def solution(nums: list[int], k: int) -&gt; int: ...</code></pre>
+<pre><code class="language-java">class Solution { public int solution(int[] nums, int k) { ... } }</code></pre>
+<pre><code class="language-javascript">function solution(nums, k) { ... }</code></pre>
+<h2 id="integers-division-and-modulo">Integers, division and modulo</h2>
+<p>Division and modulo of negative numbers behave differently in Python than in C++. This is the most common silent bug when switching.</p>
+<table><thead><tr><th>C++</th><th>Python</th><th>Java</th><th>JavaScript</th></tr></thead><tbody><tr><td><code>int</code> / <code>long long</code></td><td><code>int</code> (unbounded, never overflows)</td><td><code>int</code> (32-bit) / <code>long</code> (64-bit)</td><td><code>number</code> (safe only to 2^53 ≈ 9×10^15); <code>BigInt</code> with <code>123n</code></td></tr><tr><td><code>LLONG_MAX</code>, <code>INT_MAX</code></td><td><code>float(&#39;inf&#39;)</code> or <code>10**18</code></td><td><code>Long.MAX_VALUE</code>, <code>Integer.MAX_VALUE</code></td><td><code>Infinity</code>, <code>Number.MAX_SAFE_INTEGER</code></td></tr><tr><td><code>7 / 2</code> = 3</td><td><code>7 // 2</code> = 3 (<code>7 / 2</code> = 3.5!)</td><td><code>7 / 2</code> = 3</td><td><code>Math.floor(7 / 2)</code> = 3, or <code>(7 / 2) | 0</code> for 32-bit</td></tr><tr><td><code>-7 / 2</code> = -3 (truncates)</td><td><code>-7 // 2</code> = <strong>-4</strong> (floors)</td><td><code>-7 / 2</code> = -3</td><td><code>Math.trunc(-7 / 2)</code> = -3</td></tr><tr><td><code>-7 % 3</code> = -1</td><td><code>-7 % 3</code> = <strong>2</strong> (always ≥ 0 for positive mod)</td><td><code>-7 % 3</code> = -1; <code>Math.floorMod(-7, 3)</code> = 2</td><td><code>-7 % 3</code> = -1</td></tr><tr><td><code>(a * b) % MOD</code> with <code>long long</code></td><td><code>a * b % MOD</code> (no overflow)</td><td><code>(a * b) % MOD</code> with <code>long</code> operands; <code>Math.multiplyExact</code> to detect overflow</td><td><code>Number((BigInt(a) * BigInt(b)) % BigInt(MOD))</code> when a·b &gt; 2^53</td></tr><tr><td><code>pow</code> with mod (hand-written)</td><td><code>pow(a, b, MOD)</code> built in; <code>pow(a, -1, MOD)</code> = modular inverse</td><td><code>BigInteger.valueOf(a).modPow(...)</code> or hand-written</td><td>hand-written with <code>BigInt</code></td></tr><tr><td><code>__gcd(a, b)</code> / <code>std::gcd</code></td><td><code>math.gcd(a, b)</code>, <code>math.lcm</code></td><td>hand-written or <code>BigInteger.gcd</code></td><td>hand-written</td></tr><tr><td><code>sqrt</code> (double)</td><td><code>math.isqrt(n)</code> exact integer sqrt</td><td><code>(long) Math.sqrt(n)</code> then adjust</td><td><code>Math.floor(Math.sqrt(n))</code></td></tr><tr><td><code>1LL &lt;&lt; 40</code></td><td><code>1 &lt;&lt; 40</code></td><td><code>1L &lt;&lt; 40</code> (<code>1 &lt;&lt; 40</code> wraps!)</td><td><code>2 ** 40</code> (<code>1 &lt;&lt; 40</code> is 32-bit!)</td></tr><tr><td><code>__builtin_popcount(x)</code></td><td><code>bin(x).count(&#39;1&#39;)</code> or <code>x.bit_count()</code> (3.10+)</td><td><code>Integer.bitCount(x)</code> / <code>Long.bitCount</code></td><td>loop, or <code>x.toString(2).split(&#39;1&#39;).length - 1</code></td></tr></tbody></table>
+<p>Java overflow is silent, exactly like C++: if any intermediate can pass 2.1×10^9, make it <code>long</code>, including the literal (<code>1_000_000_007L</code>).</p>
+<p>JavaScript bitwise operators (<code>&amp;</code>, <code>|</code>, <code>&gt;&gt;</code>, <code>&lt;&lt;</code>) convert to <strong>32-bit signed</strong>. Never use them on values above 2^31.</p>
+<h2 id="stl-container-equivalents">STL container equivalents</h2>
+<p>Every common STL container has a direct equivalent in Java; Python and JavaScript lack an ordered set/map, and JavaScript lacks a heap.</p>
+<table><thead><tr><th>C++</th><th>Python</th><th>Java</th><th>JavaScript</th></tr></thead><tbody><tr><td><code>vector&lt;int&gt; v(n, 0)</code></td><td><code>v = [0] * n</code></td><td><code>int[] v = new int[n]</code> or <code>List&lt;Integer&gt; v = new ArrayList&lt;&gt;()</code></td><td><code>const v = new Array(n).fill(0)</code></td></tr><tr><td>2D <code>vector&lt;vector&lt;int&gt;&gt; g(n, vector&lt;int&gt;(m))</code></td><td><code>g = [[0] * m for _ in range(n)]</code> (never <code>[[0]*m]*n</code>)</td><td><code>int[][] g = new int[n][m]</code></td><td><code>Array.from({length: n}, () =&gt; new Array(m).fill(0))</code></td></tr><tr><td><code>v.push_back(x)</code> / <code>pop_back()</code> / <code>back()</code></td><td><code>v.append(x)</code> / <code>v.pop()</code> / <code>v[-1]</code></td><td><code>list.add(x)</code> / <code>list.remove(list.size()-1)</code> / <code>list.get(list.size()-1)</code></td><td><code>v.push(x)</code> / <code>v.pop()</code> / <code>v.at(-1)</code></td></tr><tr><td><code>pair&lt;int,int&gt;</code></td><td>tuple <code>(a, b)</code> (compares lexicographically)</td><td><code>int[]{a, b}</code> or <code>record P(int a, int b){}</code></td><td><code>[a, b]</code></td></tr><tr><td><code>unordered_map&lt;K,V&gt;</code></td><td><code>dict</code> / <code>defaultdict(int)</code> / <code>Counter</code></td><td><code>HashMap&lt;K,V&gt;</code>; <code>m.merge(k, 1, Integer::sum)</code>, <code>m.getOrDefault(k, 0)</code></td><td><code>new Map()</code>; <code>m.set(k, (m.get(k) ?? 0) + 1)</code></td></tr><tr><td><code>unordered_set&lt;T&gt;</code></td><td><code>set()</code></td><td><code>HashSet&lt;T&gt;</code></td><td><code>new Set()</code></td></tr><tr><td><code>map&lt;K,V&gt;</code> (ordered)</td><td>none built in: <code>dict</code> + <code>sorted(d)</code> at the end, or <code>sortedcontainers.SortedDict</code> if allowed</td><td><code>TreeMap&lt;K,V&gt;</code>: <code>floorKey</code>, <code>ceilingKey</code>, <code>firstKey</code>, <code>lastKey</code></td><td>none: sort keys when needed</td></tr><tr><td><code>set&lt;T&gt;</code> + <code>lower_bound</code></td><td><code>bisect.insort(lst, x)</code> + <code>bisect_left</code> (O(n) insert, OK to ~10^5) or <code>SortedList</code></td><td><code>TreeSet&lt;T&gt;</code>: <code>ceiling(x)</code> = lower_bound, <code>higher(x)</code> = upper_bound, <code>floor</code>, <code>lower</code></td><td>sorted array + hand-written binary search</td></tr><tr><td><code>multiset&lt;T&gt;</code></td><td><code>SortedList</code> or <code>Counter</code> + heap</td><td><code>TreeMap&lt;T, Integer&gt;</code> as counts</td><td>Map of counts</td></tr><tr><td><code>priority_queue&lt;int&gt;</code> (max-heap)</td><td><code>heapq</code> is a <strong>min</strong>-heap: push <code>-x</code> for max</td><td><code>new PriorityQueue&lt;&gt;(Collections.reverseOrder())</code></td><td>write your own heap (template below)</td></tr><tr><td><code>priority_queue&lt;T, vector&lt;T&gt;, greater&lt;T&gt;&gt;</code> (min)</td><td><code>heapq.heappush(h, x)</code>, <code>heapq.heappop(h)</code>, <code>h[0]</code> = top</td><td><code>new PriorityQueue&lt;&gt;()</code>; <code>offer</code>, <code>poll</code>, <code>peek</code></td><td>own heap</td></tr><tr><td><code>deque&lt;T&gt;</code></td><td><code>collections.deque</code>: <code>append</code>, <code>appendleft</code>, <code>pop</code>, <code>popleft</code></td><td><code>ArrayDeque&lt;T&gt;</code>: <code>offerLast</code>, <code>offerFirst</code>, <code>pollFirst</code>, <code>pollLast</code></td><td>array + head index for a queue (<code>shift()</code> is O(n))</td></tr><tr><td><code>stack&lt;T&gt;</code></td><td>list: <code>append</code> / <code>pop</code> / <code>[-1]</code></td><td><code>ArrayDeque&lt;T&gt;</code>: <code>push</code> / <code>pop</code> / <code>peek</code> (not <code>Stack</code>)</td><td>array: <code>push</code> / <code>pop</code> / <code>at(-1)</code></td></tr><tr><td><code>queue&lt;T&gt;</code></td><td><code>deque</code>: <code>append</code> / <code>popleft</code></td><td><code>ArrayDeque&lt;T&gt;</code>: <code>offer</code> / <code>poll</code></td><td>array + head pointer</td></tr><tr><td><code>bitset&lt;N&gt;</code></td><td>Python <code>int</code> as a bitmask (arbitrary size)</td><td><code>BitSet</code> or <code>long[]</code></td><td><code>Uint8Array</code> / <code>Uint32Array</code></td></tr><tr><td><code>memset(a, -1, ...)</code> / <code>fill</code></td><td><code>[-1] * n</code></td><td><code>Arrays.fill(a, -1)</code></td><td><code>new Array(n).fill(-1)</code> or <code>new Int32Array(n).fill(-1)</code></td></tr><tr><td><code>iota</code>, <code>accumulate</code>, <code>max_element</code></td><td><code>range(n)</code>, <code>sum(a)</code> / <code>itertools.accumulate</code>, <code>max(a)</code></td><td>loops, or <code>Arrays.stream(a).sum()</code> / <code>.max().getAsInt()</code></td><td><code>a.reduce((s, x) =&gt; s + x, 0)</code>, <code>Math.max(...a)</code> (crashes above ~10^5 items; use a loop)</td></tr><tr><td><code>next_permutation</code></td><td><code>itertools.permutations(a)</code> (sorted order if <code>a</code> sorted)</td><td>hand-written</td><td>hand-written</td></tr></tbody></table>
+<p>Java: <code>HashMap&lt;Integer, ...&gt;</code> keys are boxed objects. Compare them with <code>.equals()</code>, never <code>==</code> (it fails above 127).</p>
+<h2 id="sorting-and-binary-search">Sorting and binary search</h2>
+<p>Python sorts with a <strong>key function</strong>, Java and JavaScript with a <strong>comparator returning a number</strong> (negative / 0 / positive), not a <code>bool</code> like C++.</p>
+<table><thead><tr><th>C++</th><th>Python</th><th>Java</th><th>JavaScript</th></tr></thead><tbody><tr><td><code>sort(a.begin(), a.end())</code></td><td><code>a.sort()</code> or <code>b = sorted(a)</code></td><td><code>Arrays.sort(a)</code> / <code>Collections.sort(list)</code></td><td><code>a.sort((x, y) =&gt; x - y)</code> (<strong>default sorts as strings</strong>: <code>[10, 9, 1]</code> → <code>[1, 10, 9]</code>)</td></tr><tr><td><code>sort(..., greater&lt;&gt;())</code></td><td><code>a.sort(reverse=True)</code></td><td><code>Arrays.sort(boxed, Collections.reverseOrder())</code> (needs <code>Integer[]</code>)</td><td><code>a.sort((x, y) =&gt; y - x)</code></td></tr><tr><td>Sort pairs by second, then first desc</td><td><code>a.sort(key=lambda p: (p[1], -p[0]))</code></td><td><code>a.sort((p, q) -&gt; p[1] != q[1] ? Integer.compare(p[1], q[1]) : Integer.compare(q[0], p[0]))</code></td><td><code>a.sort((p, q) =&gt; p[1] - q[1] || q[0] - p[0])</code></td></tr><tr><td><code>lower_bound(a, x)</code> (index)</td><td><code>bisect.bisect_left(a, x)</code></td><td>hand-written (below); <code>Arrays.binarySearch</code> returns any match, not the first</td><td>hand-written (below)</td></tr><tr><td><code>upper_bound(a, x)</code></td><td><code>bisect.bisect_right(a, x)</code></td><td>hand-written</td><td>hand-written</td></tr><tr><td><code>stable_sort</code></td><td><code>sort</code> is always stable</td><td>object sort is stable; <code>int[]</code> sort is not (doesn&#39;t matter for primitives)</td><td><code>sort</code> is stable (ES2019+)</td></tr><tr><td><code>reverse(a.begin(), a.end())</code></td><td><code>a.reverse()</code> or <code>a[::-1]</code></td><td><code>Collections.reverse(list)</code></td><td><code>a.reverse()</code></td></tr><tr><td><code>unique</code> after sort</td><td><code>sorted(set(a))</code></td><td><code>TreeSet</code> or loop</td><td><code>[...new Set(a)].sort((x, y) =&gt; x - y)</code></td></tr></tbody></table>
+<p>Java trap: <code>Arrays.sort(int[])</code> is a dual-pivot quicksort with O(n^2) worst case on adversarial tests. If you fear hacked inputs, sort an <code>Integer[]</code> or <code>long[]</code> after shuffling. Use <code>Integer.compare(a, b)</code>, never <code>a - b</code>, when values can overflow.</p>
+<p><strong>lower_bound you can paste in Java / JavaScript</strong> (first index with <code>a[i] &gt;= x</code>):</p>
+<pre><code class="language-java">static int lowerBound(int[] a, int x) {
+    int lo = 0, hi = a.length;
+    while (lo &lt; hi) { int mid = (lo + hi) &gt;&gt;&gt; 1; if (a[mid] &lt; x) lo = mid + 1; else hi = mid; }
+    return lo;
+}</code></pre>
+<pre><code class="language-javascript">function lowerBound(a, x) {
+  let lo = 0, hi = a.length;
+  while (lo &lt; hi) { const mid = (lo + hi) &gt;&gt; 1; if (a[mid] &lt; x) lo = mid + 1; else hi = mid; }
+  return lo;
+}</code></pre>
+<p>For upper_bound, change <code>a[mid] &lt; x</code> to <code>a[mid] &lt;= x</code>. Binary search on the answer works the same in all four languages.</p>
+<h2 id="strings-and-characters">Strings and characters</h2>
+<p>Strings are <strong>immutable</strong> in all three languages, unlike <code>std::string</code>. Appending in a loop is O(n^2): collect pieces in a list / <code>StringBuilder</code> / array and join once.</p>
+<table><thead><tr><th>C++</th><th>Python</th><th>Java</th><th>JavaScript</th></tr></thead><tbody><tr><td><code>s[i]</code> (a <code>char</code>)</td><td><code>s[i]</code> (a 1-char string)</td><td><code>s.charAt(i)</code> (a <code>char</code>)</td><td><code>s[i]</code> (a 1-char string)</td></tr><tr><td><code>s.size()</code></td><td><code>len(s)</code></td><td><code>s.length()</code> (arrays: <code>a.length</code>)</td><td><code>s.length</code></td></tr><tr><td><code>s[i] - &#39;a&#39;</code></td><td><code>ord(s[i]) - ord(&#39;a&#39;)</code></td><td><code>s.charAt(i) - &#39;a&#39;</code></td><td><code>s.charCodeAt(i) - 97</code></td></tr><tr><td><code>char(&#39;a&#39; + k)</code></td><td><code>chr(ord(&#39;a&#39;) + k)</code></td><td><code>(char) (&#39;a&#39; + k)</code></td><td><code>String.fromCharCode(97 + k)</code></td></tr><tr><td><code>s[i] = &#39;x&#39;</code></td><td><code>t = list(s); t[i] = &#39;x&#39;; s = &#39;&#39;.join(t)</code></td><td><code>char[] c = s.toCharArray(); c[i] = &#39;x&#39;; s = new String(c)</code></td><td><code>const c = [...s]; c[i] = &#39;x&#39;; s = c.join(&#39;&#39;)</code></td></tr><tr><td><code>s += t</code> in a loop</td><td><code>parts.append(t)</code> then <code>&#39;&#39;.join(parts)</code></td><td><code>StringBuilder sb; sb.append(t); sb.toString()</code></td><td><code>parts.push(t)</code> then <code>parts.join(&#39;&#39;)</code></td></tr><tr><td><code>s.substr(i, len)</code></td><td><code>s[i:i+len]</code></td><td><code>s.substring(i, i + len)</code> (end index, not length!)</td><td><code>s.slice(i, i + len)</code></td></tr><tr><td><code>s == t</code></td><td><code>s == t</code></td><td><code>s.equals(t)</code> (<strong><code>==</code> compares references</strong>)</td><td><code>s === t</code></td></tr><tr><td><code>s &lt; t</code></td><td><code>s &lt; t</code></td><td><code>s.compareTo(t) &lt; 0</code></td><td><code>s &lt; t</code></td></tr><tr><td><code>s.find(t)</code> (npos if none)</td><td><code>s.find(t)</code> (-1 if none)</td><td><code>s.indexOf(t)</code></td><td><code>s.indexOf(t)</code></td></tr><tr><td><code>to_string(x)</code> / <code>stoi(s)</code> / <code>stoll(s)</code></td><td><code>str(x)</code> / <code>int(s)</code></td><td><code>String.valueOf(x)</code> / <code>Integer.parseInt(s)</code> / <code>Long.parseLong(s)</code></td><td><code>String(x)</code> / <code>Number(s)</code> or <code>parseInt(s, 10)</code></td></tr><tr><td><code>reverse(s)</code></td><td><code>s[::-1]</code></td><td><code>new StringBuilder(s).reverse().toString()</code></td><td><code>[...s].reverse().join(&#39;&#39;)</code></td></tr><tr><td>split by spaces (<code>stringstream</code>)</td><td><code>s.split()</code></td><td><code>s.trim().split(&quot;\\s+&quot;)</code></td><td><code>s.trim().split(/\s+/)</code></td></tr><tr><td><code>isdigit</code>, <code>isalpha</code>, <code>toupper</code></td><td><code>c.isdigit()</code>, <code>c.isalpha()</code>, <code>c.upper()</code></td><td><code>Character.isDigit(c)</code>, <code>Character.isLetter(c)</code>, <code>Character.toUpperCase(c)</code></td><td><code>/\d/.test(c)</code>, <code>/[a-z]/i.test(c)</code>, <code>c.toUpperCase()</code></td></tr><tr><td><code>int cnt[26]</code></td><td><code>[0] * 26</code> or <code>Counter(s)</code></td><td><code>int[] cnt = new int[26]</code></td><td><code>new Array(26).fill(0)</code></td></tr></tbody></table>
+<p>Python has extras C++ lacks: <code>s.count(t)</code>, <code>s.startswith(t)</code>, <code>s.isdigit()</code>, f-strings <code>f&quot;{x:.6f}&quot;</code> for fixed decimals. Java: <code>String.format(&quot;%.6f&quot;, x)</code>. JavaScript: <code>x.toFixed(6)</code>.</p>
+<h2 id="algorithm-templates">Algorithm templates</h2>
+<p>The logic is identical to your C++ templates; only the containers change. Graphs below are 0-indexed with <code>n</code> nodes.</p>
+<h3 id="bfs-shortest-path-unweighted">BFS (shortest path, unweighted)</h3>
+<pre><code class="language-python">from collections import deque
+def bfs(adj, s):
+    dist = [-1] * len(adj); dist[s] = 0
+    q = deque([s])
+    while q:
+        u = q.popleft()
+        for v in adj[u]:
+            if dist[v] == -1:
+                dist[v] = dist[u] + 1; q.append(v)
+    return dist</code></pre>
+<pre><code class="language-java">static int[] bfs(List&lt;Integer&gt;[] adj, int s) {
+    int[] dist = new int[adj.length]; Arrays.fill(dist, -1); dist[s] = 0;
+    ArrayDeque&lt;Integer&gt; q = new ArrayDeque&lt;&gt;(); q.add(s);
+    while (!q.isEmpty()) {
+        int u = q.poll();
+        for (int v : adj[u]) if (dist[v] == -1) { dist[v] = dist[u] + 1; q.add(v); }
+    }
+    return dist;
+}
+// build: List&lt;Integer&gt;[] adj = new ArrayList[n]; for (int i = 0; i &lt; n; i++) adj[i] = new ArrayList&lt;&gt;();</code></pre>
+<pre><code class="language-javascript">function bfs(adj, s) {
+  const dist = new Array(adj.length).fill(-1); dist[s] = 0;
+  const q = [s]; let head = 0;            // never q.shift(): O(n)
+  while (head &lt; q.length) {
+    const u = q[head++];
+    for (const v of adj[u]) if (dist[v] === -1) { dist[v] = dist[u] + 1; q.push(v); }
+  }
+  return dist;
+}
+// build: const adj = Array.from({length: n}, () =&gt; []);</code></pre>
+<h3 id="dijkstra">Dijkstra</h3>
+<pre><code class="language-python">import heapq
+def dijkstra(adj, s):                     # adj[u] = [(v, w), ...]
+    dist = [float(&#39;inf&#39;)] * len(adj); dist[s] = 0
+    pq = [(0, s)]
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d &gt; dist[u]: continue
+        for v, w in adj[u]:
+            if d + w &lt; dist[v]:
+                dist[v] = d + w; heapq.heappush(pq, (dist[v], v))
+    return dist</code></pre>
+<pre><code class="language-java">static long[] dijkstra(List&lt;int[]&gt;[] adj, int s) {   // adj[u] holds {v, w}
+    long[] dist = new long[adj.length]; Arrays.fill(dist, Long.MAX_VALUE); dist[s] = 0;
+    PriorityQueue&lt;long[]&gt; pq = new PriorityQueue&lt;&gt;((a, b) -&gt; Long.compare(a[0], b[0]));
+    pq.add(new long[]{0, s});
+    while (!pq.isEmpty()) {
+        long[] top = pq.poll(); long d = top[0]; int u = (int) top[1];
+        if (d &gt; dist[u]) continue;
+        for (int[] e : adj[u]) if (d + e[1] &lt; dist[e[0]]) {
+            dist[e[0]] = d + e[1]; pq.add(new long[]{dist[e[0]], e[0]});
+        }
+    }
+    return dist;
+}</code></pre>
+<pre><code class="language-javascript">// JavaScript has no priority queue: paste this MinHeap (O(log n) push/pop)
+class MinHeap {
+  constructor(cmp = (a, b) =&gt; a - b) { this.h = []; this.cmp = cmp; }
+  size() { return this.h.length; }
+  peek() { return this.h[0]; }
+  push(x) {
+    const h = this.h; h.push(x); let i = h.length - 1;
+    while (i &gt; 0) {
+      const p = (i - 1) &gt;&gt; 1;
+      if (this.cmp(h[i], h[p]) &gt;= 0) break;
+      [h[i], h[p]] = [h[p], h[i]]; i = p;
+    }
+  }
+  pop() {
+    const h = this.h, top = h[0], last = h.pop();
+    if (h.length) {
+      h[0] = last; let i = 0;
+      for (;;) {
+        const l = 2 * i + 1, r = l + 1; let m = i;
+        if (l &lt; h.length &amp;&amp; this.cmp(h[l], h[m]) &lt; 0) m = l;
+        if (r &lt; h.length &amp;&amp; this.cmp(h[r], h[m]) &lt; 0) m = r;
+        if (m === i) break;
+        [h[i], h[m]] = [h[m], h[i]]; i = m;
+      }
+    }
+    return top;
+  }
+}
+
+function dijkstra(adj, s) {               // adj[u] = [[v, w], ...]
+  const dist = new Array(adj.length).fill(Infinity); dist[s] = 0;
+  const pq = new MinHeap((a, b) =&gt; a[0] - b[0]); pq.push([0, s]);
+  while (pq.size()) {
+    const [d, u] = pq.pop();
+    if (d &gt; dist[u]) continue;
+    for (const [v, w] of adj[u]) if (d + w &lt; dist[v]) { dist[v] = d + w; pq.push([dist[v], v]); }
+  }
+  return dist;
+}</code></pre>
+<h3 id="disjoint-set-union">Disjoint set union</h3>
+<pre><code class="language-python">parent = list(range(n)); size = [1] * n
+def find(x):
+    while parent[x] != x:
+        parent[x] = parent[parent[x]]     # path halving, no recursion
+        x = parent[x]
+    return x
+def union(a, b):
+    a, b = find(a), find(b)
+    if a == b: return False
+    if size[a] &lt; size[b]: a, b = b, a
+    parent[b] = a; size[a] += size[b]; return True</code></pre>
+<pre><code class="language-java">static int[] parent, sz;
+static int find(int x) { while (parent[x] != x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+static boolean union(int a, int b) {
+    a = find(a); b = find(b); if (a == b) return false;
+    if (sz[a] &lt; sz[b]) { int t = a; a = b; b = t; }
+    parent[b] = a; sz[a] += sz[b]; return true;
+}</code></pre>
+<pre><code class="language-javascript">const parent = Array.from({length: n}, (_, i) =&gt; i), sz = new Array(n).fill(1);
+const find = x =&gt; { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+function union(a, b) {
+  a = find(a); b = find(b); if (a === b) return false;
+  if (sz[a] &lt; sz[b]) [a, b] = [b, a];
+  parent[b] = a; sz[a] += sz[b]; return true;
+}</code></pre>
+<h3 id="dp-and-recursion">DP and recursion</h3>
+<p>Prefer <strong>bottom-up loops</strong> in all three languages; recursion depth is the main difference from C++.</p>
+<pre><code class="language-python">import sys
+from functools import cache
+sys.setrecursionlimit(10**6)              # default limit is 1000; deep recursion may still crash
+
+@cache                                    # = memo table for free (lru_cache(None) on Python &lt; 3.9)
+def f(i, j): ...
+
+dp = [[0] * (m + 1) for _ in range(n + 1)]   # bottom-up is faster and safe</code></pre>
+<pre><code class="language-java">// Deep DFS (depth &gt; ~10^4): run inside a thread with a 256 MB stack
+public static void main(String[] args) throws Exception {
+    Thread t = new Thread(null, () -&gt; { try { solve(); } catch (Exception e) { throw new RuntimeException(e); } }, &quot;main&quot;, 1 &lt;&lt; 28);
+    t.start(); t.join();
+}
+long[][] dp = new long[n + 1][m + 1];      // zero-initialized; memo: fill with -1</code></pre>
+<pre><code class="language-javascript">// Node&#39;s stack overflows near depth ~10^4: convert DFS to an explicit stack
+const memo = new Map();                    // key: `${i},${j}` or i * M + j (faster)
+const dp = Array.from({length: n + 1}, () =&gt; new Array(m + 1).fill(0));</code></pre>
+<p><strong>Iterative DFS</strong> (works in every language, no stack limits):</p>
+<pre><code class="language-python">stack = [s]; seen = [False] * n; seen[s] = True
+while stack:
+    u = stack.pop()
+    for v in adj[u]:
+        if not seen[v]:
+            seen[v] = True; stack.append(v)</code></pre>
+<h2 id="gotchas-and-performance-traps">Gotchas and performance traps</h2>
+<p>Budget roughly <strong>10^7 simple operations per second in Python</strong>, ~10^8 in Java and JavaScript, versus ~10^8–10^9 in C++.</p>
+<p><strong>Python</strong></p>
+<ul><li><p><code>[[0] * m] * n</code> makes n references to the <strong>same</strong> row. Use a list comprehension.</p></li><li><p>Default arguments are shared: never <code>def f(a=[])</code>.</p></li><li><p><code>input()</code> without <code>sys.stdin.readline</code> is slow; <code>readline</code> keeps the <code>\n</code>, so call <code>.strip()</code> on strings.</p></li><li><p>Recursion over ~1,000 deep raises <code>RecursionError</code>; <code>setrecursionlimit</code> helps but can segfault past ~10^5. Go iterative.</p></li><li><p>Speed: local variables beat globals (wrap in <code>main()</code>); built-ins (<code>sum</code>, <code>sorted</code>, <code>min</code>, slicing, <code>str.join</code>) run in C; avoid <code>list.pop(0)</code> and <code>x in list</code> (both O(n)), use <code>deque</code> and <code>set</code>.</p></li><li><p><code>round(2.5)</code> = 2 (banker&#39;s rounding). Use <code>int(x + 0.5)</code> for positives.</p></li><li><p>Python 3.8+ has <code>math.comb</code>, <code>math.perm</code>; 3.10+ has <code>int.bit_count</code>; 3.9+ has <code>functools.cache</code>. Check the version if the platform shows it.</p></li></ul>
+<p><strong>Java</strong></p>
+<ul><li><p><code>==</code> on <code>String</code>, <code>Integer</code>, <code>Long</code> compares references. Use <code>.equals()</code>.</p></li><li><p>Generic collections hold boxed objects: <code>ArrayList&lt;Integer&gt;</code> is 3–5x slower than <code>int[]</code>. Use primitive arrays in hot loops.</p></li><li><p><code>Integer</code> division by zero throws; <code>int</code> overflow wraps silently.</p></li><li><p>Always <code>out.flush()</code> (or <code>out.close()</code>) at the end of a <code>PrintWriter</code>.</p></li><li><p><code>System.out.println</code> in a loop of 10^5+ lines is slow: use <code>PrintWriter</code> or a <code>StringBuilder</code>.</p></li><li><p>Function-style platforms want the exact class and method name; don&#39;t add <code>public</code> to a second top-level class in the same file.</p></li></ul>
+<p><strong>JavaScript</strong></p>
+<ul><li><p><code>arr.sort()</code> without a comparator sorts <strong>as strings</strong>.</p></li><li><p><code>==</code> coerces types (<code>&quot;1&quot; == 1</code> is true). Always use <code>===</code>.</p></li><li><p>Numbers are doubles: products over 2^53 (≈ 9×10^15) silently lose precision; <code>% MOD</code> on them is wrong. Use <code>BigInt</code> for the multiply step.</p></li><li><p><code>Math.max(...arr)</code> throws &quot;Maximum call stack&quot; on large arrays. Use a loop or <code>reduce</code>.</p></li><li><p><code>array.shift()</code> and <code>array.unshift()</code> are O(n); <code>array.includes()</code> is O(n); use <code>Set</code>.</p></li><li><p>Object keys are strings: <code>obj[1]</code> and <code>obj[&quot;1&quot;]</code> are the same key; <code>Map</code> keeps types.</p></li><li><p><code>for (const i in arr)</code> gives <strong>string</strong> indices. Use <code>for (let i = 0; ...)</code> or <code>for (const x of arr)</code>.</p></li><li><p>Typed arrays (<code>Int32Array</code>, <code>Float64Array</code>) are much faster for large numeric tables.</p></li></ul>
+<h2 id="exam-day-checklist">Exam-day checklist</h2>
+<p>Only part of the test cases are visible, so the hidden ones decide your score: test edge cases yourself before submitting.</p>
+<p><strong>Before the test</strong></p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> Solve 5–10 easy/medium problems in Python (LeetCode or HackerRank) to build muscle memory for <code>dict</code>, <code>heapq</code>, <code>bisect</code>, slicing.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Solve 2–3 in Java to rehearse the skeleton, <code>TreeMap</code>, <code>PriorityQueue</code>, and <code>long</code> arithmetic.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Retype the templates in this doc once from memory.</p></li></ul>
+<p><strong>For each question</strong></p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> Read the code template: function-style (return the value) or stdin/stdout (read and print)? Which class/function name is required?</p></li><li data-checked="false"><p><input type="checkbox" disabled> Note the limits and choose complexity as in C++, then apply the Python budget (~10^7 ops/s).</p></li><li data-checked="false"><p><input type="checkbox" disabled> Run the visible test cases first.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Add your own hidden-case checks: n = 0 or 1, all equal values, negatives, maximum n, maximum values (overflow in Java/JS), empty string, duplicates.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Python: negative <code>//</code> and <code>%</code>? Java: <code>int</code> overflow, <code>==</code> on objects, <code>flush()</code>? JavaScript: default <code>sort()</code>, numbers over 2^53?</p></li><li data-checked="false"><p><input type="checkbox" disabled> Remove debug prints before submitting; output format exactly as asked (spaces, newlines, decimals).</p></li><li data-checked="false"><p><input type="checkbox" disabled> Partial credit counts: submit a correct brute force early, then optimize.</p></li></ul>
+
+</main></body></html>

@@ -6,6 +6,7 @@
 
 using namespace std;
 using ll = long long;
+using int128 = __int128;
 
 #define dbg(x) cerr << #x << ": " << x << '\n'
 

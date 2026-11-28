@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modular · CRT · Floor-sum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+:root{
+  --bg:#f7f6f2; --surface:#ffffff; --surface-2:#f0eee8; --text:#1d1c1a; --muted:#5f5b53;
+  --border:#e2dfd6; --accent:#b4532a; --accent-soft:#f6e3d8; --ok:#2f7a4f; --ok-soft:#e1f1e7;
+  --warn:#8a6100; --warn-soft:#fbf0d4; --code-bg:#1f2126; --code-text:#e6e3dc; --kw:#f2a65a; --cm:#8a8f98; --num:#9cd2a8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16161a; --surface:#1e1f24; --surface-2:#26272d; --text:#ebe8e1; --muted:#a39e94;
+    --border:#33343b; --accent:#f08a5d; --accent-soft:#3a2720; --ok:#7fcf9b; --ok-soft:#1d3127;
+    --warn:#e8c46a; --warn-soft:#342c17; --code-bg:#111215; --code-text:#e6e3dc;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16161a; --surface:#1e1f24; --surface-2:#26272d; --text:#ebe8e1; --muted:#a39e94;
+  --border:#33343b; --accent:#f08a5d; --accent-soft:#3a2720; --ok:#7fcf9b; --ok-soft:#1d3127;
+  --warn:#e8c46a; --warn-soft:#342c17; --code-bg:#111215; --code-text:#e6e3dc;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans Thai",system-ui,sans-serif;font-size:16.5px;line-height:1.75}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);max-width:1180px;margin:0 auto;gap:40px;padding:0 24px}
+nav.toc{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:32px 0;font-size:14px}
+nav.toc .brand{font-weight:700;font-size:15px;margin-bottom:16px}
+nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:3px 0 3px 12px;border-left:2px solid var(--border)}
+nav.toc a:hover{color:var(--accent);border-left-color:var(--accent)}
+nav.toc a.sub{padding-left:24px;font-size:13px}
+main{padding:40px 0 120px;min-width:0}
+header.hero h1{font-size:2.1rem;line-height:1.25;margin:0 0 8px}
+header.hero p{color:var(--muted);margin:0 0 20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.chip{font-size:13px;padding:3px 10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border);color:var(--muted)}
+h2{font-size:1.6rem;margin:64px 0 12px;padding-top:12px;border-top:1px solid var(--border)}
+h2 .num{color:var(--accent);margin-right:8px}
+h3{font-size:1.2rem;margin:36px 0 8px}
+h4{font-size:1.02rem;margin:22px 0 6px}
+a{color:var(--accent)}
+p{margin:10px 0}
+code{font-family:"JetBrains Mono",monospace;font-size:.88em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+pre{background:var(--code-bg);color:var(--code-text);padding:16px 18px;border-radius:10px;overflow-x:auto;font-size:13.5px;line-height:1.6;margin:14px 0}
+pre code{background:none;padding:0;font-size:inherit;color:inherit}
+pre .k{color:var(--kw)} pre .c{color:var(--cm);font-style:italic} pre .n{color:var(--num)}
+.box{border:1px solid var(--border);background:var(--surface);border-radius:12px;padding:14px 18px;margin:16px 0}
+.box.def{border-left:4px solid var(--accent)}
+.box.tip{background:var(--ok-soft);border-color:transparent}
+.box.warn{background:var(--warn-soft);border-color:transparent}
+.box .label{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:2px}
+.box.tip .label{color:var(--ok)} .box.warn .label{color:var(--warn)}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14.5px;display:block;overflow-x:auto}
+th,td{border:1px solid var(--border);padding:6px 10px;text-align:left;white-space:nowrap}
+th{background:var(--surface-2)}
+details{border:1px solid var(--border);border-radius:10px;background:var(--surface);margin:12px 0;padding:0 16px}
+details summary{cursor:pointer;padding:10px 0;font-weight:600}
+details[open] summary{border-bottom:1px solid var(--border);margin-bottom:8px}
+.problem{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:16px 20px;margin:20px 0}
+.problem .ptitle{font-weight:700;font-size:1.05rem}
+.problem .src{font-size:13px;color:var(--muted)}
+.calc{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:16px 20px;margin:20px 0}
+.calc label{font-size:13px;color:var(--muted);display:block}
+.calc input{font-family:"JetBrains Mono",monospace;font-size:14px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);width:100%}
+.calc .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:8px 0}
+.calc button{font-family:inherit;font-size:14px;padding:7px 16px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer;margin-top:6px}
+.calc .out{font-family:"JetBrains Mono",monospace;font-size:13.5px;background:var(--surface-2);border-radius:8px;padding:10px 12px;margin-top:10px;white-space:pre-wrap;word-break:break-word}
+ul.plist{padding-left:20px} ul.plist li{margin:6px 0}
+.tag{font-size:12px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:6px;white-space:nowrap}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:4px 0}
+svg text{fill:var(--text);font-family:"IBM Plex Sans Thai",sans-serif}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;padding:0 16px;gap:0}
+  nav.toc{position:static;height:auto;padding:24px 0 0;border-bottom:1px solid var(--border)}
+  header.hero h1{font-size:1.6rem}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc">
+  <div class="brand">สารบัญ</div>
+  <a href="#mod">1. Modular arithmetic</a>
+  <a class="sub" href="#mod-basic">กฎพื้นฐาน</a>
+  <a class="sub" href="#mod-pow">Binary exponentiation</a>
+  <a class="sub" href="#mod-egcd">Extended Euclid</a>
+  <a class="sub" href="#mod-inv">Modular inverse</a>
+  <a class="sub" href="#mod-lin">Linear congruence</a>
+  <a href="#crt">2. Chinese Remainder Theorem</a>
+  <a class="sub" href="#crt-thm">ทฤษฎีบท</a>
+  <a class="sub" href="#crt-two">รวมสองสมการ</a>
+  <a class="sub" href="#crt-gen">กรณี modulus ไม่ coprime</a>
+  <a class="sub" href="#crt-garner">Garner's algorithm</a>
+  <a class="sub" href="#crt-app">การประยุกต์</a>
+  <a class="sub" href="#crt-calc">เครื่องคิด CRT</a>
+  <a href="#fs">3. Floor sum</a>
+  <a class="sub" href="#fs-def">นิยามและภาพเรขาคณิต</a>
+  <a class="sub" href="#fs-derive">การพิสูจน์แบบ Euclid</a>
+  <a class="sub" href="#fs-code">โค้ด</a>
+  <a class="sub" href="#fs-app">เทคนิคแปลงโจทย์</a>
+  <a class="sub" href="#fs-calc">เครื่องคิด floor sum</a>
+  <a href="#ex">4. โจทย์ตัวอย่างพร้อมเฉลย</a>
+  <a href="#cp">5. ประยุกต์ใน Competitive Programming</a>
+  <a class="sub" href="#cp-signal">ตารางจับสัญญาณโจทย์</a>
+  <a class="sub" href="#cp-template">Template: modint + nCr</a>
+  <a class="sub" href="#cp-expect">ความน่าจะเป็น / ค่าคาดหวัง mod p</a>
+  <a class="sub" href="#cp-tower">เลขชี้กำลังซ้อน</a>
+  <a class="sub" href="#cp-sqrt">ผลรวมที่มี ⌊n/i⌋</a>
+  <a class="sub" href="#cp-cycle">ของที่วนเป็นคาบ / วงกลม</a>
+  <a class="sub" href="#cp-composite">mod ไม่ใช่จำนวนเฉพาะ</a>
+  <a class="sub" href="#cp-range">นับเศษในช่วง (floor sum)</a>
+  <a class="sub" href="#cp-bugs">Checklist ก่อนส่ง</a>
+  <a href="#practice">6. โจทย์ฝึกเพิ่ม</a>
+  <a href="#cheat">7. Cheat sheet</a>
+  <a href="#refs">แหล่งอ้างอิง</a>
+</nav>
+
+<main>
+<header class="hero">
+  <h1>Modular Arithmetic, CRT และ Floor Sum</h1>
+  <p>บทเรียนสำหรับ competitive programming ตั้งแต่พื้นฐานไปจนถึงเทคนิคที่ใช้ใน AtCoder / Codeforces โค้ดทุกชิ้นเป็น C++17 และผ่านการทดสอบกับ brute force แล้ว</p>
+  <div class="chips">
+    <span class="chip">อิงเนื้อหาหลักจาก cp-algorithms</span>
+    <span class="chip">AtCoder Library (floor_sum, crt)</span>
+    <span class="chip">มีเครื่องคิดเลขให้ลองเล่น</span>
+  </div>
+</header>
+
+<!-- ============ 1. MODULAR ============ -->
+<h2 id="mod"><span class="num">1</span>Modular arithmetic</h2>
+
+<div class="box def"><span class="label">นิยาม</span>
+เราเขียน $a \equiv b \pmod m$ (อ่านว่า a สมภาค b มอดุโล m) เมื่อ $m \mid (a-b)$ หรือก็คือ $a$ และ $b$ เหลือเศษเท่ากันเมื่อหารด้วย $m$
+</div>
+
+<p>มองง่าย ๆ: เรากำลังทำงานบน "นาฬิกา" ที่มี $m$ ช่อง คือ $\{0,1,\dots,m-1\}$ ทุกการบวก ลบ คูณ จะวนกลับมาในช่วงนี้เสมอ</p>
+
+<h3 id="mod-basic">1.1 กฎพื้นฐาน</h3>
+$$
+\begin{aligned}
+(a+b) \bmod m &= ((a \bmod m) + (b \bmod m)) \bmod m\\
+(a-b) \bmod m &= ((a \bmod m) - (b \bmod m) + m) \bmod m\\
+(a\cdot b) \bmod m &= ((a \bmod m)\cdot(b \bmod m)) \bmod m
+\end{aligned}
+$$
+<p>แต่ <b>การหาร</b> ไม่ทำแบบนี้ได้ตรง ๆ: $\frac{a}{b} \bmod m \ne \frac{a \bmod m}{b \bmod m}$ ต้องใช้ <a href="#mod-inv">modular inverse</a> แทน</p>
+
+<div class="box warn"><span class="label">กับดักที่เจอบ่อย</span>
+<ul style="margin:4px 0;padding-left:20px">
+<li><b>เศษติดลบ</b>: ใน C++ <code>-7 % 3 == -1</code> ไม่ใช่ 2 ให้ใช้ <code>((a % m) + m) % m</code></li>
+<li><b>Overflow ตอนคูณ</b>: ถ้า $m \approx 10^9$ ผลคูณสองตัวได้ $\approx 10^{18}$ ยังพอดีกับ <code>long long</code> แต่ถ้า $m \approx 10^{18}$ ต้องใช้ <code>__int128</code></li>
+<li><b>ลืม mod หลังลบ</b>: <code>(a - b) % m</code> อาจติดลบ ให้บวก <code>m</code> ก่อน</li>
+</ul>
+</div>
+
+<h3 id="mod-pow">1.2 Binary exponentiation — คำนวณ $a^e \bmod m$ ใน $O(\log e)$</h3>
+<p>ใช้ข้อเท็จจริงว่า $a^{e} = (a^{e/2})^2$ ถ้า $e$ คู่ และ $a^e = a\cdot a^{e-1}$ ถ้า $e$ คี่ หรือเขียนแบบวนลูปตามบิตของ $e$</p>
+<pre><code><span class="k">using</span> ll = <span class="k">long long</span>;
+ll binpow(ll a, ll e, ll m) {
+    ll r = <span class="n">1</span> % m;  a %= m;  <span class="k">if</span> (a &lt; <span class="n">0</span>) a += m;
+    <span class="k">while</span> (e) {
+        <span class="k">if</span> (e &amp; <span class="n">1</span>) r = (__int128)r * a % m;
+        a = (__int128)a * a % m;
+        e &gt;&gt;= <span class="n">1</span>;
+    }
+    <span class="k">return</span> r;
+}</code></pre>
+
+<h3 id="mod-egcd">1.3 Extended Euclidean algorithm</h3>
+<p>นอกจากหา $g=\gcd(a,b)$ แล้ว ยังหา $x,y$ ที่ทำให้ $ax+by=g$ (Bézout's identity) ได้ด้วย เป็นเครื่องมือหลักของทั้ง inverse และ CRT</p>
+<p>แนวคิด: ถ้ารู้ $x_1,y_1$ ที่ $b x_1 + (a \bmod b) y_1 = g$ แล้ว เพราะ $a \bmod b = a - \lfloor a/b\rfloor b$ จะได้</p>
+$$x = y_1,\qquad y = x_1 - \left\lfloor \tfrac{a}{b} \right\rfloor y_1$$
+<pre><code>ll exgcd(ll a, ll b, ll &amp;x, ll &amp;y) {
+    <span class="k">if</span> (b == <span class="n">0</span>) { x = <span class="n">1</span>; y = <span class="n">0</span>; <span class="k">return</span> a; }
+    ll x1, y1;
+    ll g = exgcd(b, a % b, x1, y1);
+    x = y1;
+    y = x1 - (a / b) * y1;
+    <span class="k">return</span> g;
+}</code></pre>
+<p>ค่า $|x|,|y|$ ที่ได้จะไม่เกิน $\max(a,b)$ จึงไม่ overflow</p>
+
+<h3 id="mod-inv">1.4 Modular inverse</h3>
+<div class="box def"><span class="label">นิยาม</span>
+$a^{-1}$ คือจำนวน $x$ ที่ $a x \equiv 1 \pmod m$ มีอยู่ <b>ก็ต่อเมื่อ</b> $\gcd(a,m)=1$
+</div>
+<h4>วิธีที่ 1: Extended Euclid (ใช้ได้ทุก $m$ ที่ $\gcd(a,m)=1$)</h4>
+<p>หา $x,y$ ที่ $ax+my=1$ แล้ว mod ทั้งสองข้างด้วย $m$ ได้ $ax\equiv 1$</p>
+<pre><code>ll inv_mod(ll a, ll m) {           <span class="c">// คืน -1 ถ้าไม่มี inverse</span>
+    ll x, y;
+    ll g = exgcd(((a % m) + m) % m, m, x, y);
+    <span class="k">if</span> (g != <span class="n">1</span>) <span class="k">return</span> -<span class="n">1</span>;
+    <span class="k">return</span> ((x % m) + m) % m;
+}</code></pre>
+<h4>วิธีที่ 2: Fermat's little theorem (เมื่อ $m=p$ เป็นจำนวนเฉพาะ)</h4>
+$$a^{p-1}\equiv 1 \pmod p \;\Rightarrow\; a^{-1}\equiv a^{p-2} \pmod p$$
+<p>เขียนสั้นสุด: <code>binpow(a, p - 2, p)</code> ทั่วไปกว่านี้คือ Euler: $a^{-1} \equiv a^{\varphi(m)-1}$</p>
+<h4>วิธีที่ 3: inverse ของ $1..n$ ทั้งหมดใน $O(n)$</h4>
+<p>จาก $m = \lfloor m/i \rfloor \cdot i + (m \bmod i)$ จะได้</p>
+$$i^{-1} \equiv -\left\lfloor \tfrac{m}{i} \right\rfloor \cdot (m \bmod i)^{-1} \pmod m$$
+<pre><code>inv[<span class="n">1</span>] = <span class="n">1</span>;
+<span class="k">for</span> (<span class="k">int</span> i = <span class="n">2</span>; i &lt;= n; i++)
+    inv[i] = (m - (m / i) * inv[m % i] % m) % m;</code></pre>
+<div class="box tip"><span class="label">ใช้บ่อยมาก</span>
+คำนวณ $\binom{n}{k} \bmod p$: เตรียม <code>fact[]</code> และ <code>invfact[]</code> ไว้ก่อน แล้วตอบแต่ละ query ใน $O(1)$ ด้วย $\binom{n}{k} = n!\,(k!)^{-1}((n-k)!)^{-1}$
+</div>
+
+<h3 id="mod-lin">1.5 Linear congruence $ax\equiv b \pmod m$</h3>
+<p>ให้ $g=\gcd(a,m)$</p>
+<ul>
+<li>ถ้า $g \nmid b$ ⇒ <b>ไม่มีคำตอบ</b></li>
+<li>ถ้า $g \mid b$ ⇒ หารทุกตัวด้วย $g$: $a'x \equiv b' \pmod{m'}$ โดย $a'=a/g,\ b'=b/g,\ m'=m/g$ ตอนนี้ $\gcd(a',m')=1$ จึงได้ $x \equiv b'\cdot a'^{-1} \pmod{m'}$ (มี $g$ คำตอบในช่วง $[0,m)$)</li>
+</ul>
+<p>สมการนี้คือ "CRT ที่มีแค่สมการเดียว" และเป็นแกนของการรวมสองสมการในหัวข้อถัดไป</p>
+
+<!-- ============ 2. CRT ============ -->
+<h2 id="crt"><span class="num">2</span>Chinese Remainder Theorem (CRT)</h2>
+
+<p>ปัญหาโบราณจากตำรา <i>Sunzi Suanjing</i>: "มีของจำนวนหนึ่ง นับทีละ 3 เหลือ 2 นับทีละ 5 เหลือ 3 นับทีละ 7 เหลือ 2 ของมีกี่ชิ้น?" ซึ่งคือการแก้ระบบ</p>
+$$x\equiv 2 \pmod 3,\quad x\equiv 3 \pmod 5,\quad x\equiv 2 \pmod 7$$
+<p>คำตอบคือ $x \equiv 23 \pmod{105}$</p>
+
+<h3 id="crt-thm">2.1 ตัวทฤษฎีบท</h3>
+<div class="box def"><span class="label">ทฤษฎีบท</span>
+ให้ $m_1, m_2, \dots, m_k$ เป็นจำนวนเต็มบวกที่ <b>coprime เป็นคู่ ๆ</b> และ $M=m_1m_2\cdots m_k$ แล้วระบบ
+$$x\equiv a_1 \pmod{m_1},\ \dots,\ x\equiv a_k \pmod{m_k}$$
+มีคำตอบ <b>เพียงหนึ่งเดียว</b> ใน $[0, M)$
+</div>
+<p>มุมมองเชิงโครงสร้าง: ฟังก์ชัน $x \mapsto (x \bmod m_1, \dots, x \bmod m_k)$ เป็น bijection (และรักษาการบวก/คูณ) ระหว่าง $\mathbb{Z}_M$ กับ $\mathbb{Z}_{m_1}\times\cdots\times\mathbb{Z}_{m_k}$ แปลว่าเราจะ "แยก" ปัญหา mod $M$ เป็นหลาย ๆ ปัญหา mod เล็ก ๆ คำนวณแยกกัน แล้วค่อย "ประกอบ" กลับก็ได้ นี่คือหัวใจของการประยุกต์เกือบทั้งหมด</p>
+
+<h4>การสร้างคำตอบแบบตรง (constructive)</h4>
+<p>ให้ $M_i = M/m_i$ และ $N_i = M_i^{-1} \bmod m_i$ (มีเพราะ coprime) แล้ว</p>
+$$x = \sum_{i=1}^{k} a_i M_i N_i \pmod M$$
+<p>ตรวจสอบ: เมื่อ mod $m_j$ ทุกพจน์ $i\ne j$ หายไปเพราะ $m_j \mid M_i$ เหลือ $a_j M_j N_j \equiv a_j$</p>
+<details><summary>ลองกับตัวอย่าง Sunzi</summary>
+<p>$M=105$, $M_1=35,\ M_2=21,\ M_3=15$</p>
+<p>$N_1 = 35^{-1} \bmod 3 = 2^{-1} \bmod 3 = 2$, $N_2 = 21^{-1} \bmod 5 = 1^{-1} = 1$, $N_3 = 15^{-1}\bmod 7 = 1^{-1}=1$</p>
+<p>$x = 2\cdot35\cdot2 + 3\cdot21\cdot1 + 2\cdot15\cdot1 = 140+63+30 = 233 \equiv 23 \pmod{105}$ ✓</p>
+</details>
+<div class="box warn"><span class="label">ข้อจำกัด</span>
+สูตรนี้ต้องคำนวณกับค่า $M$ ทั้งก้อน ถ้า $M$ ใหญ่เกิน 64 บิตจะ overflow และใช้ไม่ได้ถ้า modulus ไม่ coprime ในทางปฏิบัติจึงนิยม <b>รวมทีละสองสมการ</b> หรือใช้ <b>Garner</b>
+</div>
+
+<h3 id="crt-two">2.2 รวมสองสมการ (วิธีที่ใช้จริงในการแข่ง)</h3>
+<p>ต้องการ $x$ ที่ $x\equiv a_1 \pmod{m_1}$ และ $x \equiv a_2 \pmod{m_2}$</p>
+<p>จากสมการแรก $x = a_1 + m_1 t$ แทนในสมการที่สอง:</p>
+$$m_1 t \equiv a_2 - a_1 \pmod{m_2}$$
+<p>นี่คือ linear congruence! ให้ $g=\gcd(m_1,m_2)$ และหา $p$ จาก exgcd ที่ $m_1 p + m_2 q = g$</p>
+<ul>
+<li>ถ้า $g \nmid (a_2-a_1)$ ⇒ ระบบ <b>ไม่มีคำตอบ</b></li>
+<li>ไม่อย่างนั้น $t \equiv \frac{a_2-a_1}{g}\cdot p \pmod{\frac{m_2}{g}}$ และ $x \equiv a_1 + m_1 t \pmod{\operatorname{lcm}(m_1,m_2)}$</li>
+</ul>
+<p>ทำซ้ำไปเรื่อย ๆ: รวมสมการที่ 1 กับ 2 ได้สมการใหม่ แล้วรวมกับสมการที่ 3 ...</p>
+
+<h3 id="crt-gen">2.3 โค้ด CRT ทั่วไป (รองรับ modulus ที่ไม่ coprime)</h3>
+<pre><code><span class="c">// คืน {x, L} โดย x ≡ r[i] (mod m[i]) ทุก i และ L = lcm(m) ; ถ้าไม่มีคำตอบคืน {-1, -1}</span>
+<span class="c">// ต้องการให้ lcm ไม่เกิน ~9e18</span>
+pair&lt;ll, ll&gt; crt(<span class="k">const</span> vector&lt;ll&gt;&amp; r, <span class="k">const</span> vector&lt;ll&gt;&amp; m) {
+    ll R = <span class="n">0</span>, M = <span class="n">1</span>;                          <span class="c">// เริ่มจาก x ≡ 0 (mod 1)</span>
+    <span class="k">for</span> (size_t i = <span class="n">0</span>; i &lt; r.size(); i++) {
+        ll mi = m[i], ri = ((r[i] % mi) + mi) % mi;
+        ll p, q;
+        ll g = exgcd(M, mi, p, q);                <span class="c">// M*p + mi*q = g</span>
+        <span class="k">if</span> ((ri - R) % g != <span class="n">0</span>) <span class="k">return</span> {-<span class="n">1</span>, -<span class="n">1</span>};
+        ll mg = mi / g;
+        ll t = (ll)((__int128)((ri - R) / g) * p % mg);
+        <span class="k">if</span> (t &lt; <span class="n">0</span>) t += mg;
+        R += M * t;                               <span class="c">// R ใหม่ยัง &lt; lcm</span>
+        M *= mg;                                  <span class="c">// M = lcm(M, mi)</span>
+        R %= M;
+    }
+    <span class="k">return</span> {R, M};
+}</code></pre>
+<p>ตัวอย่าง: <code>crt({2,3,2},{3,5,7})</code> → <code>{23, 105}</code>, <code>crt({1,3},{4,6})</code> → <code>{9, 12}</code>, <code>crt({1,2},{4,6})</code> → ไม่มีคำตอบ (เพราะ $1\not\equiv 2 \pmod 2$)</p>
+<div class="box tip"><span class="label">เงื่อนไขมีคำตอบ</span>
+ระบบทั่วไปมีคำตอบก็ต่อเมื่อ $a_i \equiv a_j \pmod{\gcd(m_i, m_j)}$ ทุกคู่ $i,j$ และคำตอบจะไม่ซ้ำ mod $\operatorname{lcm}(m_1,\dots,m_k)$ ใน AtCoder Library ใช้ <code>atcoder::crt(r, m)</code> ได้เลย
+</div>
+
+<h3 id="crt-garner">2.4 Garner's algorithm (เมื่อคำตอบใหญ่เกิน 64 บิต)</h3>
+<p>ตามที่ cp-algorithms อธิบาย ถ้า $m_1,\dots,m_k$ coprime เป็นคู่ ๆ เราเขียน $x$ ในรูป <b>mixed radix</b> ได้</p>
+$$x = x_1 + x_2 m_1 + x_3 m_1 m_2 + \dots + x_k m_1 \cdots m_{k-1},\qquad 0 \le x_i < m_i$$
+<p>หา $x_i$ ทีละตัว: mod $m_2$ ทั้งสองข้างได้ $a_2 \equiv x_1 + x_2 m_1$ ⇒ $x_2 \equiv (a_2 - x_1)\, m_1^{-1} \pmod{m_2}$ ทำแบบเดียวกันต่อไป โดยให้ $r_{ji} = m_j^{-1} \bmod m_i$</p>
+<pre><code><span class="c">// a[i] = x mod p[i], p coprime เป็นคู่ ๆ  →  คืน x mod MOD (MOD อะไรก็ได้)</span>
+ll garner(vector&lt;ll&gt; a, vector&lt;ll&gt; p, ll MOD) {
+    <span class="k">int</span> k = a.size();
+    vector&lt;ll&gt; x(k);
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i &lt; k; i++) {
+        x[i] = a[i];
+        <span class="k">for</span> (<span class="k">int</span> j = <span class="n">0</span>; j &lt; i; j++) {
+            x[i] = inv_mod(p[j], p[i]) * (x[i] - x[j]) % p[i];  <span class="c">// ควร precompute r[j][i]</span>
+            <span class="k">if</span> (x[i] &lt; <span class="n">0</span>) x[i] += p[i];
+        }
+    }
+    ll res = <span class="n">0</span>, mul = <span class="n">1</span>;                      <span class="c">// ประกอบกลับแบบ mod MOD</span>
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i &lt; k; i++) {
+        res = (res + x[i] % MOD * mul) % MOD;
+        mul = mul * (p[i] % MOD) % MOD;
+    }
+    <span class="k">return</span> res;
+}</code></pre>
+<p>จุดเด่น: <b>ไม่เคยต้องเก็บ $M$ ทั้งก้อน</b> ทุกการคำนวณอยู่ภายใต้ mod $p_i$ เล็ก ๆ ความซับซ้อน $O(k^2)$ และสามารถประกอบเป็นเลขใหญ่ (big integer) หรือเอาเฉพาะ mod ที่ต้องการก็ได้ — นี่คือวิธีที่ใช้ใน NTT แบบ 3 primes เพื่อให้ได้ผล convolution mod ค่าใดก็ได้ (เช่น $10^9+7$)</p>
+<p>cp-algorithms ยังชี้ว่าถ้าเรียงค่า mixed radix เราสามารถ <b>เปรียบเทียบ</b> เลขใหญ่สองตัวที่เก็บในรูปเศษได้ด้วย (เทียบจาก $x_k$ ลงมา)</p>
+
+<h3 id="crt-app">2.5 การประยุกต์ใช้ CRT</h3>
+<table>
+<tr><th>สถานการณ์</th><th>ใช้ CRT อย่างไร</th></tr>
+<tr><td>หาเวลาที่สองเหตุการณ์ที่เป็นคาบ "บังเอิญตรงกัน"</td><td>เหตุการณ์ A เกิดที่ $t\equiv a \pmod p$, B ที่ $t\equiv b\pmod q$ → รวมสองสมการ (เช่น ABC193 E)</td></tr>
+<tr><td>$\binom{n}{k} \bmod m$ ที่ $m$ ไม่ใช่จำนวนเฉพาะ</td><td>แยก $m=\prod p_i^{e_i}$ คำนวณ mod $p_i^{e_i}$ แต่ละตัว (Lucas / Granville) แล้วรวมด้วย CRT</td></tr>
+<tr><td>convolution mod ค่าใดก็ได้</td><td>ทำ NTT 3 ครั้งด้วย prime ที่เป็นมิตรกับ NTT แล้ว Garner รวม</td></tr>
+<tr><td>คำนวณเลขใหญ่มากแต่รู้ขอบเขต</td><td>คำนวณ mod หลาย ๆ prime แล้วประกอบ (เช่น determinant ของ matrix จำนวนเต็ม)</td></tr>
+<tr><td>Hashing ด้วยสอง modulus</td><td>คู่ (h mod p, h mod q) เทียบเท่า h mod pq ตาม CRT ⇒ โอกาสชนลดลงเหมือนใช้ mod ใหญ่</td></tr>
+<tr><td>ฟังก์ชัน multiplicative ($\varphi$, จำนวนรากของ $x^2\equiv1$)</td><td>CRT ทำให้นับแยกต่อ prime power แล้วคูณกัน</td></tr>
+</table>
+
+<h3 id="crt-calc">2.6 ลองเล่น: เครื่องคิด CRT</h3>
+<div class="calc">
+  <label>ใส่สมการทีละบรรทัดในรูป <code>r m</code> (หมายถึง x ≡ r mod m) รองรับเลขใหญ่และ modulus ไม่ coprime</label>
+  <textarea id="crtIn" rows="4" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:14px;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)">2 3
+3 5
+2 7</textarea>
+  <button onclick="runCRT()">แก้ระบบ</button>
+  <div class="out" id="crtOut">กดปุ่มเพื่อดูขั้นตอน</div>
+</div>
+
+<!-- ============ 3. FLOOR SUM ============ -->
+<h2 id="fs"><span class="num">3</span>Floor sum</h2>
+
+<h3 id="fs-def">3.1 นิยามและภาพเรขาคณิต</h3>
+<div class="box def"><span class="label">ปัญหา</span>
+กำหนด $n, m, a, b$ ให้หา
+$$f(n,m,a,b)=\sum_{i=0}^{n-1}\left\lfloor \frac{a i+b}{m} \right\rfloor$$
+โดย $n, m$ อาจใหญ่ถึง $10^9$ (ไล่ลูปตรง ๆ ไม่ได้) — ทำได้ใน $O(\log m)$ คล้าย Euclid
+</div>
+<p><b>ภาพในหัว:</b> ค่า $\lfloor (ai+b)/m \rfloor$ คือจำนวนจุด lattice $(i, j)$ ที่ $1 \le j \le \frac{ai+b}{m}$ ดังนั้น $f$ คือจำนวนจุดจำนวนเต็มที่อยู่ <b>ใต้เส้นตรง</b> $y=\frac{ax+b}{m}$ เหนือแกน x ในช่วง $0\le x<n$</p>
+
+<svg viewBox="0 0 420 230" width="100%" style="max-width:460px;display:block;margin:12px auto" role="img" aria-label="จุด lattice ใต้เส้นตรง y=(6x+3)/10">
+  <g stroke="var(--border)" stroke-width="1">
+    <line x1="40" y1="200" x2="400" y2="200"/><line x1="40" y1="200" x2="40" y2="20"/>
+  </g>
+  <g font-size="12">
+    <text x="36" y="216">0</text><text x="116" y="216">1</text><text x="196" y="216">2</text><text x="276" y="216">3</text><text x="356" y="216">4</text>
+    <text x="24" y="144">1</text><text x="24" y="84">2</text><text x="24" y="24">3</text>
+    <text x="380" y="216">x</text>
+  </g>
+  <!-- line y=(6x+3)/10 ; px = 40+80x ; py = 200-60y -->
+  <line x1="40" y1="182" x2="360" y2="38" stroke="var(--accent)" stroke-width="2.5"/>
+  <text x="250" y="60" font-size="13" style="fill:var(--accent)">y = (6x+3)/10</text>
+  <g fill="var(--ok)">
+    <circle cx="200" cy="140" r="6"/>
+    <circle cx="280" cy="140" r="6"/><circle cx="280" cy="80" r="6"/>
+  </g>
+  <g fill="none" stroke="var(--muted)" stroke-width="1.2">
+    <circle cx="120" cy="140" r="5"/><circle cx="200" cy="80" r="5"/><circle cx="120" cy="80" r="5"/>
+  </g>
+</svg>
+<p style="text-align:center;font-size:14px;color:var(--muted)">$f(4,10,6,3)$: ค่าในแต่ละ $i=0..3$ คือ $0,0,1,2$ รวม = 3 จุด (จุดสีเขียว)</p>
+
+<h3 id="fs-derive">3.2 การพิสูจน์: ลดรูปแบบ Euclid</h3>
+<h4>ขั้นที่ 1: ลด $a$ และ $b$ ให้เล็กกว่า $m$</h4>
+<p>ถ้า $a \ge m$ เขียน $a = qm + a'$:</p>
+$$\left\lfloor\frac{ai+b}{m}\right\rfloor = qi + \left\lfloor\frac{a'i+b}{m}\right\rfloor \;\Rightarrow\; f(n,m,a,b) = q\cdot\frac{n(n-1)}{2} + f(n,m,a',b)$$
+<p>ถ้า $b \ge m$ เขียน $b = q'm + b'$: $\;f(n,m,a,b) = q'\cdot n + f(n,m,a,b')$</p>
+
+<h4>ขั้นที่ 2: เมื่อ $a<m,\ b<m$ — สลับแกน (หมุนมองจากแกน y)</h4>
+<p>นับจุดเดิมแต่นับ "ตามแถว" แทน "ตามคอลัมน์" จุด $(i,j)$ ถูกนับเมื่อ $0\le i<n$, $j\ge1$ และ $jm \le ai+b$ หรือ $i \ge \frac{jm-b}{a}$</p>
+<p>สำหรับแต่ละแถว $j$ จำนวน $i$ ที่ใช้ได้คือ</p>
+$$n - \left\lceil \frac{jm-b}{a} \right\rceil = \left\lfloor \frac{an + b - jm}{a} \right\rfloor$$
+<p>โดย $j$ วิ่งตั้งแต่ $1$ ถึง $n' = \left\lfloor \frac{an+b}{m} \right\rfloor$ ให้ $y_{\max} = an+b$ และ $b' = y_{\max} \bmod m$ แทน $j = n' - k$ ($k=0..n'-1$):</p>
+$$an+b-jm = (y_{\max} - n'm) + km = b' + km$$
+$$\boxed{\,f(n,m,a,b) = f\!\left(n',\ a,\ m,\ b'\right)\,}$$
+<p>สังเกตว่า $m$ กับ $a$ <b>สลับที่กัน</b> — เหมือน $\gcd(m,a) \to \gcd(a, m \bmod a)$ ในขั้นถัดไปจะ mod $m$ ด้วย $a$ จึงจบใน $O(\log \min(a,m))$ รอบ</p>
+<p>เงื่อนไขหยุด: ถ้า $y_{\max} < m$ แปลว่าทุกพจน์เป็น 0 แล้ว</p>
+
+<details><summary>ไล่ทีละขั้น: $f(4, 10, 6, 3)$</summary>
+<table>
+<tr><th>รอบ</th><th>(n, m, a, b) ตอนเริ่ม</th><th>ลด a</th><th>ลด b</th><th>ans</th><th>y_max → (n', b')</th></tr>
+<tr><td>1</td><td>(4, 10, 6, 3)</td><td>—</td><td>—</td><td>0</td><td>27 → (2, 7) สลับ m↔a</td></tr>
+<tr><td>2</td><td>(2, 6, 10, 7)</td><td>+1·1 = 1, a=4</td><td>+2·1 = 2, b=1</td><td>3</td><td>9 → (1, 3) สลับ</td></tr>
+<tr><td>3</td><td>(1, 4, 6, 3)</td><td>+0, a=2</td><td>—</td><td>3</td><td>5 → (1, 1) สลับ</td></tr>
+<tr><td>4</td><td>(1, 2, 4, 1)</td><td>+0, a=0</td><td>—</td><td>3</td><td>1 &lt; 2 หยุด</td></tr>
+</table>
+<p>ได้ 3 ตรงกับภาพด้านบน ✓</p>
+</details>
+
+<h3 id="fs-code">3.3 โค้ด (ตาม AtCoder Library)</h3>
+<pre><code><span class="k">using</span> ull = <span class="k">unsigned long long</span>;
+<span class="c">// sum_{i=0}^{n-1} floor((a*i + b) / m),  ทุกตัว ≥ 0</span>
+ull floor_sum_unsigned(ull n, ull m, ull a, ull b) {
+    ull ans = <span class="n">0</span>;
+    <span class="k">while</span> (<span class="k">true</span>) {
+        <span class="k">if</span> (a &gt;= m) { ans += n * (n - <span class="n">1</span>) / <span class="n">2</span> * (a / m); a %= m; }
+        <span class="k">if</span> (b &gt;= m) { ans += n * (b / m); b %= m; }
+        ull y_max = a * n + b;
+        <span class="k">if</span> (y_max &lt; m) <span class="k">break</span>;
+        n = y_max / m;
+        b = y_max % m;
+        swap(m, a);
+    }
+    <span class="k">return</span> ans;
+}
+<span class="c">// รองรับ a, b ติดลบ (floor แบบคณิตศาสตร์) ; 0 ≤ n, 1 ≤ m</span>
+ll floor_sum(ll n, ll m, ll a, ll b) {
+    ull ans = <span class="n">0</span>;
+    <span class="k">if</span> (a &lt; <span class="n">0</span>) { ull a2 = ((a % m) + m) % m; ans -= <span class="n">1ULL</span> * n * (n - <span class="n">1</span>) / <span class="n">2</span> * ((a2 - a) / m); a = a2; }
+    <span class="k">if</span> (b &lt; <span class="n">0</span>) { ull b2 = ((b % m) + m) % m; ans -= <span class="n">1ULL</span> * n * ((b2 - b) / m); b = b2; }
+    <span class="k">return</span> ans + floor_sum_unsigned(n, m, a, b);
+}</code></pre>
+<div class="box warn"><span class="label">ขอบเขต</span>
+ACL รับประกันเมื่อ $n, m \le 10^9$ (คำตอบอาจล้น ll ได้ถ้าใหญ่กว่านี้ ระบบใช้ <code>unsigned</code> เพื่อให้ overflow ระหว่างทาง "วนกลับ" อย่างถูกต้องเมื่อคำตอบสุดท้ายพอดี) ถ้าต้องการผล mod $p$ ให้แก้เป็นคำนวณ mod ทุกขั้น
+</div>
+
+<h3 id="fs-app">3.4 เทคนิคแปลงโจทย์ให้เป็น floor sum</h3>
+<h4>(ก) ผลรวมเศษ</h4>
+$$\sum_{i=0}^{n-1} (ai+b) \bmod m = \sum_{i=0}^{n-1}(ai+b) \;-\; m\cdot f(n,m,a,b)$$
+<p>เพราะ $x \bmod m = x - m\lfloor x/m \rfloor$</p>
+
+<h4>(ข) นับว่ามีกี่ $i$ ที่ $(ai+b) \bmod m \ge c$</h4>
+<p>สังเกตว่า $\left\lfloor \frac{x + (m-c)}{m} \right\rfloor - \left\lfloor \frac{x}{m} \right\rfloor$ เป็น 1 ก็ต่อเมื่อ $x \bmod m \ge c$ (เป็น 0 อย่างอื่น) ดังนั้น</p>
+$$\#\{\,i : (ai+b)\bmod m \ge c\,\} = f(n,m,a,b+m-c) - f(n,m,a,b)$$
+<p>ใช้ได้กับคำถามแนว "นับ $x\in[L,R]$ ที่ $ax \bmod m$ ตกในช่วง $[lo,hi]$" (ลบสองครั้ง)</p>
+
+<h4>(ค) บิตที่ k ของ $ai+b$</h4>
+$$\text{bit}_k(x) = \left\lfloor \frac{x}{2^k} \right\rfloor - 2\left\lfloor \frac{x}{2^{k+1}} \right\rfloor$$
+<p>ดังนั้น $\sum_i \text{popcount}(ai+b) = \sum_k \big[f(n,2^k,a,b) - 2f(n,2^{k+1},a,b)\big]$ — ทริกนี้คือแกนของ ABC283 Ex</p>
+
+<h4>(ง) นับจุด lattice ใต้เส้นตรง / ในรูปสามเหลี่ยม</h4>
+<p>จำนวนคู่ $(x,y)$ จำนวนเต็มไม่ติดลบที่ $px + qy \le r$ คือ $\sum_{x=0}^{\lfloor r/p\rfloor} \left(\left\lfloor\frac{r - px}{q}\right\rfloor + 1\right)$ ซึ่งเป็น floor sum ที่มี $a=-p$ (ใช้เวอร์ชันที่รองรับค่าติดลบ)</p>
+
+<h4>(จ) จำนวน $i$ ที่ $\lfloor (ai+b)/m \rfloor$ เปลี่ยนค่า, ผลรวมแบบ $\sum \lfloor i\cdot\alpha \rfloor$ เมื่อ $\alpha$ เป็นเศษส่วน</h4>
+<p>ทุกอย่างที่มีหน้าตา "floor ของฟังก์ชันเชิงเส้นของ $i$" ให้นึกถึง floor sum ก่อนเสมอ</p>
+
+<h3 id="fs-calc">3.5 ลองเล่น: เครื่องคิด floor sum</h3>
+<div class="calc">
+  <div class="row">
+    <div><label>n</label><input id="fsn" value="4"></div>
+    <div><label>m</label><input id="fsm" value="10"></div>
+    <div><label>a</label><input id="fsa" value="6"></div>
+    <div><label>b</label><input id="fsb" value="3"></div>
+  </div>
+  <button onclick="runFS()">คำนวณ</button>
+  <div class="out" id="fsOut">กดปุ่มเพื่อดูการไล่แต่ละรอบ (เทียบกับ brute force ถ้า n ≤ 10⁶)</div>
+</div>
+
+<!-- ============ 4. EXAMPLES ============ -->
+<h2 id="ex"><span class="num">4</span>โจทย์ตัวอย่างพร้อมเฉลย</h2>
+
+<div class="problem">
+  <div class="ptitle">ตัวอย่าง 1 — Throne <span class="tag">Linear congruence</span></div>
+  <div class="src">AtCoder ABC186 E · <a href="https://atcoder.jp/contests/abc186/tasks/abc186_e" target="_blank" rel="noopener">ลิงก์โจทย์</a></div>
+  <p>มีเก้าอี้ $N$ ตัวเรียงเป็นวง บัลลังก์อยู่ที่ตำแหน่ง 0 คุณอยู่ห่างจากบัลลังก์ไปทางขวา $S$ ตำแหน่ง แต่ละครั้งขยับไปขวา $K$ ตำแหน่ง ต้องขยับอย่างน้อยกี่ครั้งถึงจะถึงบัลลังก์ (หรือ $-1$) โดย $N,K \le 10^9$</p>
+  <details><summary>คำใบ้</summary><p>เขียนเงื่อนไขเป็นสมการ mod ของจำนวนครั้ง $t$</p></details>
+  <details><summary>เฉลย</summary>
+  <p>ต้องการ $t$ น้อยสุดที่ $S + Kt \equiv 0 \pmod N$ หรือ $Kt \equiv N-S \pmod N$ ใช้หัวข้อ 1.5 ตรง ๆ</p>
+<pre><code>ll solve(ll N, ll S, ll K) {
+    ll x, y, g = exgcd(K, N, x, y);
+    ll b = N - S;
+    <span class="k">if</span> (b % g) <span class="k">return</span> -<span class="n">1</span>;
+    ll n2 = N / g;
+    <span class="k">return</span> (__int128)(b / g) % n2 * inv_mod(K / g % n2, n2) % n2;
+}
+<span class="c">// (10,4,3) → 2   (1000,11,2) → -1   (998244353,897581057,595591169) → 249561088</span></code></pre>
+  </details>
+</div>
+
+<div class="problem">
+  <div class="ptitle">ตัวอย่าง 2 — Oversleeping <span class="tag">CRT</span></div>
+  <div class="src">AtCoder ABC193 E · <a href="https://atcoder.jp/contests/abc193/tasks/abc193_e" target="_blank" rel="noopener">ลิงก์โจทย์</a></div>
+  <p>รถไฟวิ่งเป็นคาบ $2(X+Y)$ วินาที และจอดที่สถานีในช่วง $[X, X+Y)$ ของแต่ละคาบ คนหนึ่งหลับ/ตื่นเป็นคาบ $P+Q$ และตื่นในช่วง $[P, P+Q)$ ของแต่ละคาบ หาเวลาเร็วสุดที่รถไฟจอดอยู่และเขาตื่นอยู่พร้อมกัน ($X,P \le 10^9$, $Y,Q \le 500$)</p>
+  <details><summary>คำใบ้</summary><p>ช่วงยาวแค่ $Y, Q \le 500$ ลองทุกคู่ของ "ตำแหน่งภายในคาบ"</p></details>
+  <details><summary>เฉลย</summary>
+  <p>สำหรับทุก $u\in[X,X+Y)$ และ $v\in[P,P+Q)$ แก้ $t\equiv u \pmod{2(X+Y)}$, $t \equiv v \pmod{P+Q}$ ด้วย CRT ทั่วไป (modulus ไม่จำเป็น coprime) แล้วเอาค่าน้อยสุด รวม $Y\cdot Q \le 250{,}000$ ครั้ง ครั้งละ $O(\log)$</p>
+<pre><code>ll best = LLONG_MAX;
+<span class="k">for</span> (ll u = X; u &lt; X + Y; u++)
+    <span class="k">for</span> (ll v = P; v &lt; P + Q; v++) {
+        <span class="k">auto</span> [t, L] = crt({u, v}, {<span class="n">2</span> * (X + Y), P + Q});
+        <span class="k">if</span> (L != -<span class="n">1</span>) best = min(best, t);
+    }
+<span class="k">if</span> (best == LLONG_MAX) puts(<span class="s">"infinity"</span>); <span class="k">else</span> printf(<span class="s">"%lld\n"</span>, best);</code></pre>
+  <p>สังเกต: lcm ของสอง modulus อาจถึง $\sim 4\cdot10^{18}$ จึงต้องใช้ <code>__int128</code> ใน crt ตามโค้ดในหัวข้อ 2.3</p>
+  </details>
+</div>
+
+<div class="problem">
+  <div class="ptitle">ตัวอย่าง 3 — Floor Sum <span class="tag">Floor sum</span></div>
+  <div class="src">AtCoder Library Practice Contest C · <a href="https://atcoder.jp/contests/practice2/tasks/practice2_c" target="_blank" rel="noopener">ลิงก์โจทย์</a></div>
+  <p>ตอบ $T \le 10^5$ คำถาม แต่ละคำถามให้หา $\sum_{i=0}^{N-1}\lfloor (Ai+B)/M \rfloor$ โดย $N, M \le 10^9$, $0\le A,B<M$</p>
+  <details><summary>เฉลย</summary><p>เรียก <code>floor_sum_unsigned(N, M, A, B)</code> ตรง ๆ แต่ละคำถาม $O(\log M)$ ข้อนี้คือแบบฝึกให้พิมพ์โค้ดจากความเข้าใจให้ถูก ลองเขียนเองโดยไม่ดูโค้ดด้านบน แล้วตรวจกับ brute force เมื่อ $N$ เล็ก</p></details>
+</div>
+
+<div class="problem">
+  <div class="ptitle">ตัวอย่าง 4 — นับเศษที่ตกในช่วง <span class="tag">Floor sum trick</span></div>
+  <div class="src">โจทย์ฝึกแต่งเอง (แนวที่พบบ่อยใน ABC)</div>
+  <p>กำหนด $n, m, a, b, c$ ($\le 10^9$) นับจำนวน $i \in [0,n)$ ที่ $(ai+b) \bmod m < c$</p>
+  <details><summary>เฉลย</summary>
+  <p>จากเทคนิค (ข): จำนวนที่ $\ge c$ คือ $f(n,m,a,b+m-c) - f(n,m,a,b)$ ดังนั้นคำตอบคือ</p>
+  $$n - \big(f(n,m,a,b+m-c) - f(n,m,a,b)\big)$$
+<pre><code>ll count_less(ll n, ll m, ll a, ll b, ll c) {
+    a %= m; b %= m;
+    <span class="k">return</span> n - (floor_sum(n, m, a, b + m - c) - floor_sum(n, m, a, b));
+}</code></pre>
+  <p>ทดสอบ: $n=10, m=7, a=3, b=0, c=3$: ลำดับเศษคือ 0,3,6,2,5,1,4,0,3,6 มีค่า $<3$ อยู่ 4 ตัว</p>
+  </details>
+</div>
+
+<div class="problem">
+  <div class="ptitle">ตัวอย่าง 5 — Popcount Sum <span class="tag">Floor sum + bit trick</span></div>
+  <div class="src">AtCoder ABC283 Ex · <a href="https://atcoder.jp/contests/abc283/tasks/abc283_h" target="_blank" rel="noopener">ลิงก์โจทย์</a></div>
+  <p>หาผลรวม popcount ของทุกจำนวนใน $[1, N]$ ที่มีเศษ $R$ เมื่อหารด้วย $M$ ($N,M\le10^9$, หลาย test case)</p>
+  <details><summary>เฉลย</summary>
+  <p>จำนวนที่ต้องการคือ $x_i = Mi + R$ สำหรับ $i = 0..n-1$ โดย $n = \lfloor (N-R)/M \rfloor + 1$ ใช้เทคนิค (ค):</p>
+  $$\sum_i \text{popcount}(x_i) = \sum_{k=0}^{30} \Big[f(n, 2^k, M, R) - 2 f(n, 2^{k+1}, M, R)\Big]$$
+  <p>31 ครั้ง × $O(\log)$ ต่อ test case</p>
+  </details>
+</div>
+
+<div class="problem">
+  <div class="ptitle">ตัวอย่าง 6 — nCr mod 142857 <span class="tag">CRT + Lucas</span></div>
+  <div class="src">แนวคิดคลาสสิก (เช่น Codechef / SPOJ หลายข้อ)</div>
+  <p>หา $\binom{n}{r} \bmod 142857$ โดย $n \le 10^9$</p>
+  <details><summary>เฉลย (แนวคิด)</summary>
+  <p>$142857 = 3^3 \cdot 11 \cdot 13 \cdot 37$ แยกคำนวณ:</p>
+  <ul>
+    <li>mod 11, 13, 37 (จำนวนเฉพาะ): ใช้ <b>Lucas theorem</b> $\binom{n}{r} \equiv \prod \binom{n_i}{r_i} \pmod p$ โดย $n_i, r_i$ คือหลักฐาน $p$</li>
+    <li>mod 27: ใช้ Granville / การนับกำลังของ 3 ที่ถูกตัดออกจากแฟกทอเรียล</li>
+  </ul>
+  <p>แล้วรวม 4 ผลด้วย CRT (coprime กันหมด) — นี่คือตัวอย่างชัดของ "แยก แก้ ประกอบ"</p>
+  </details>
+</div>
+
+<!-- ============ 5. CP APPLICATIONS ============ -->
+<h2 id="cp"><span class="num">5</span>ประยุกต์ใช้ใน Competitive Programming</h2>
+<p>หัวข้อนี้รวม <b>รูปแบบโจทย์ที่เจอซ้ำ ๆ</b> ในการแข่งจริง ว่าจะ "ดูออก" ได้อย่างไรว่าต้องใช้เครื่องมือไหน พร้อมโค้ดที่ copy ไปใช้ได้ทันที (ทดสอบกับ brute force แล้วทุกชิ้น)</p>
+
+<h3 id="cp-signal">5.1 ตารางจับสัญญาณโจทย์</h3>
+<table>
+<tr><th>ถ้าโจทย์มีลักษณะนี้…</th><th>ให้นึกถึง</th><th>ดูหัวข้อ</th></tr>
+<tr><td>"output the answer modulo 998244353 / 10⁹+7" และต้องมีการหาร</td><td>modular inverse, modint</td><td><a href="#cp-template">5.2</a></td></tr>
+<tr><td>"answer can be represented as P/Q, output P·Q⁻¹"</td><td>ค่าคาดหวัง/ความน่าจะเป็น ภายใต้ mod</td><td><a href="#cp-expect">5.3</a></td></tr>
+<tr><td>นับวิธีเลือก/จัดเรียง, n ถึง 10⁶</td><td>precompute fact / invfact</td><td><a href="#cp-template">5.2</a></td></tr>
+<tr><td>$a^{b^c}$, เลขชี้กำลังใหญ่มาก</td><td>Fermat/Euler ลดเลขชี้กำลัง mod $p-1$</td><td><a href="#cp-tower">5.4</a></td></tr>
+<tr><td>$\sum_{i=1}^{n} g(i)\lfloor n/i \rfloor$, $n$ ถึง $10^{12}$</td><td>แบ่งบล็อก $O(\sqrt n)$</td><td><a href="#cp-sqrt">5.5</a></td></tr>
+<tr><td>เดินบนวงกลมทีละ K, สองสิ่งที่วนเป็นคาบ, "เมื่อไหร่ตรงกันครั้งแรก"</td><td>linear congruence, CRT</td><td><a href="#cp-cycle">5.6</a></td></tr>
+<tr><td>mod เป็นเลขประกอบ หรือใหญ่ถึง $10^{18}$</td><td>แยกด้วย CRT, <code>__int128</code></td><td><a href="#cp-composite">5.7</a></td></tr>
+<tr><td>$\lfloor (ax+b)/m \rfloor$ หรือ $(ax+b) \bmod m$ โดย x วิ่งถึง $10^9$</td><td>floor sum</td><td><a href="#cp-range">5.8</a></td></tr>
+<tr><td>นับจุดจำนวนเต็มในสามเหลี่ยม / ใต้เส้นตรง</td><td>floor sum</td><td><a href="#fs-app">3.4</a></td></tr>
+</table>
+
+<h3 id="cp-template">5.2 Template: modint + nCr</h3>
+<p>แทนที่จะเขียน <code>% MOD</code> ทุกบรรทัด (ซึ่งลืมง่ายมาก) ให้ห่อตัวเลขไว้ใน struct ที่ mod ให้อัตโนมัติ เป็นสิ่งที่นักแข่งระดับสูงเกือบทุกคนใช้</p>
+<pre><code><span class="k">template</span>&lt;<span class="k">int</span> MOD&gt; <span class="k">struct</span> Mint {
+    <span class="k">int</span> v;
+    Mint(ll x = <span class="n">0</span>) { x %= MOD; <span class="k">if</span> (x &lt; <span class="n">0</span>) x += MOD; v = x; }
+    Mint&amp; <span class="k">operator</span>+=(Mint o) { <span class="k">if</span> ((v += o.v) &gt;= MOD) v -= MOD; <span class="k">return</span> *<span class="k">this</span>; }
+    Mint&amp; <span class="k">operator</span>-=(Mint o) { <span class="k">if</span> ((v -= o.v) &lt; <span class="n">0</span>) v += MOD; <span class="k">return</span> *<span class="k">this</span>; }
+    Mint&amp; <span class="k">operator</span>*=(Mint o) { v = (ll)v * o.v % MOD; <span class="k">return</span> *<span class="k">this</span>; }
+    Mint pow(ll e) <span class="k">const</span> { Mint r = <span class="n">1</span>, a = *<span class="k">this</span>; <span class="k">while</span> (e) { <span class="k">if</span> (e &amp; <span class="n">1</span>) r *= a; a *= a; e &gt;&gt;= <span class="n">1</span>; } <span class="k">return</span> r; }
+    Mint inv() <span class="k">const</span> { <span class="k">return</span> pow(MOD - <span class="n">2</span>); }             <span class="c">// MOD ต้องเป็นจำนวนเฉพาะ</span>
+    Mint&amp; <span class="k">operator</span>/=(Mint o) { <span class="k">return</span> *<span class="k">this</span> *= o.inv(); }
+    <span class="k">friend</span> Mint <span class="k">operator</span>+(Mint a, Mint b) { <span class="k">return</span> a += b; }
+    <span class="k">friend</span> Mint <span class="k">operator</span>-(Mint a, Mint b) { <span class="k">return</span> a -= b; }
+    <span class="k">friend</span> Mint <span class="k">operator</span>*(Mint a, Mint b) { <span class="k">return</span> a *= b; }
+    <span class="k">friend</span> Mint <span class="k">operator</span>/(Mint a, Mint b) { <span class="k">return</span> a /= b; }
+    <span class="k">friend</span> ostream&amp; <span class="k">operator</span>&lt;&lt;(ostream&amp; os, Mint a) { <span class="k">return</span> os &lt;&lt; a.v; }
+};
+<span class="k">using</span> mint = Mint&lt;<span class="n">1000000007</span>&gt;;               <span class="c">// หรือ 998244353</span>
+
+<span class="k">const int</span> N = <span class="n">1000000</span>;
+mint fact[N + <span class="n">1</span>], ifact[N + <span class="n">1</span>];
+<span class="k">void</span> init() {
+    fact[<span class="n">0</span>] = <span class="n">1</span>;
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">1</span>; i &lt;= N; i++) fact[i] = fact[i - <span class="n">1</span>] * i;
+    ifact[N] = fact[N].inv();                       <span class="c">// inverse ครั้งเดียว O(log)</span>
+    <span class="k">for</span> (<span class="k">int</span> i = N; i &gt; <span class="n">0</span>; i--) ifact[i - <span class="n">1</span>] = ifact[i] * i;   <span class="c">// ไล่ย้อนกลับ</span>
+}
+mint C(<span class="k">int</span> n, <span class="k">int</span> k) {
+    <span class="k">if</span> (k &lt; <span class="n">0</span> || k &gt; n) <span class="k">return</span> <span class="n">0</span>;
+    <span class="k">return</span> fact[n] * ifact[k] * ifact[n - k];
+}</code></pre>
+<div class="box tip"><span class="label">ทำไม ifact ไล่ย้อน?</span>
+เพราะ $\frac{1}{(i-1)!} = \frac{1}{i!}\cdot i$ จึงใช้ inverse แค่ครั้งเดียว ทั้งหมด $O(N + \log p)$ แทน $O(N\log p)$ ใน AtCoder มี <code>atcoder::modint998244353</code> / <code>modint1000000007</code> ให้ใช้ทันที
+</div>
+
+<h3 id="cp-expect">5.3 ความน่าจะเป็น / ค่าคาดหวังภายใต้ mod</h3>
+<p>Codeforces และ AtCoder ชอบถามค่าคาดหวังที่เป็นเศษส่วน แล้วให้ตอบเป็น $P\cdot Q^{-1} \bmod p$ กฎสำคัญ: <b>ทุกการดำเนินการที่ใช้กับเศษส่วนได้ ใช้กับ modint ได้หมด</b> (บวก ลบ คูณ หาร) เพราะ $\mathbb{Z}_p$ เป็น field ดังนั้นแค่เขียนสูตรตามปกติแล้วใช้ <code>mint</code> แทน <code>double</code></p>
+<div class="problem">
+  <div class="ptitle">ตัวอย่าง — Coupon collector</div>
+  <p>ลูกเต๋ามี $n$ หน้า ($n\le10^6$) ทอยจนกว่าจะเห็นครบทุกหน้า คาดหวังว่าจะทอยกี่ครั้ง? ตอบ mod $10^9+7$</p>
+  <details><summary>เฉลย</summary>
+  <p>เมื่อเห็นแล้ว $i$ หน้า โอกาสได้หน้าใหม่คือ $\frac{n-i}{n}$ จำนวนครั้งที่คาดหวังจึงเป็น $\frac{n}{n-i}$ (geometric distribution) รวมได้ $E = \sum_{i=1}^{n} \frac{n}{i} = n H_n$</p>
+<pre><code>mint coupon(<span class="k">int</span> n) {
+    mint s = <span class="n">0</span>;
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">1</span>; i &lt;= n; i++) s += mint(n) / i;   <span class="c">// O(n log p) ; ใช้ inv table ได้ O(n)</span>
+    <span class="k">return</span> s;
+}
+<span class="c">// n = 2 → 3      n = 6 → 14.7 = 147/10 → 900000021</span></code></pre>
+  </details>
+</div>
+<div class="box warn"><span class="label">กับดัก</span>
+<ul style="margin:4px 0;padding-left:20px">
+<li><b>เปรียบเทียบค่า modint ไม่ได้</b> เช่นหา max ของค่าคาดหวังสองแบบ ต้องคำนวณด้วย double/fraction แยก</li>
+<li>ห้ามหารด้วยค่าที่อาจเป็น 0 mod p (เช่น $n \ge p$)</li>
+<li>DP ความน่าจะเป็นแบบ "ทอยจนกว่า…" มักได้สมการ $E = 1 + pE + \dots$ ให้ย้ายข้างแก้แบบพีชคณิตก่อน แล้วค่อยหาร</li>
+</ul>
+</div>
+
+<h3 id="cp-tower">5.4 เลขชี้กำลังซ้อน $a^{b^c} \bmod p$</h3>
+<p>จาก Fermat: ถ้า $p \nmid a$ แล้ว $a^{p-1}\equiv 1$ ดังนั้นเลขชี้กำลังสามารถ mod ด้วย $p-1$ ได้: $a^{b^c} \equiv a^{\,b^c \bmod (p-1)} \pmod p$</p>
+<div class="problem">
+  <div class="ptitle">CSES 1712 — Exponentiation II</div>
+  <div class="src"><a href="https://cses.fi/problemset/task/1712" target="_blank" rel="noopener">ลิงก์โจทย์</a></div>
+<pre><code>ll tower(ll a, ll b, ll c) {
+    <span class="k">const</span> ll P = <span class="n">1000000007</span>;
+    <span class="k">if</span> (a % P == <span class="n">0</span>)                                  <span class="c">// Fermat ใช้ไม่ได้ ต้องแยกเคส</span>
+        <span class="k">return</span> (b == <span class="n">0</span> &amp;&amp; c &gt; <span class="n">0</span>) ? <span class="n">1</span> : <span class="n">0</span>;           <span class="c">// b^c == 0 → a^0 = 1</span>
+    <span class="k">return</span> binpow(a, binpow(b, c, P - <span class="n">1</span>), P);        <span class="c">// สังเกต: mod P-1 ไม่ใช่ P</span>
+}</code></pre>
+</div>
+<div class="box tip"><span class="label">กรณี mod ไม่ใช่จำนวนเฉพาะ</span>
+ใช้ <b>Euler's theorem แบบทั่วไป</b>: ถ้า $e \ge \varphi(m)$ แล้ว $a^e \equiv a^{(e \bmod \varphi(m)) + \varphi(m)} \pmod m$ (ใช้ได้แม้ $\gcd(a,m)\ne 1$) — ใช้กับ power tower $a_1^{a_2^{a_3^{\cdots}}}$ โดยเรียกซ้ำ $m \to \varphi(m) \to \varphi(\varphi(m))\to\dots$ ซึ่งลดลงเป็น 1 ใน $O(\log m)$ ขั้น
+</div>
+
+<h3 id="cp-sqrt">5.5 ผลรวมที่มี $\lfloor n/i \rfloor$ — แบ่งบล็อก $O(\sqrt n)$</h3>
+<p>อย่าสับสนกับ floor sum: ที่นี่ตัวหารเปลี่ยน (<b>$n/i$</b>) ไม่ใช่ฟังก์ชันเชิงเส้น ข้อสังเกตคือ $\lfloor n/i \rfloor$ มีค่าที่ต่างกันไม่เกิน $2\sqrt n$ ค่า และ $i$ ที่ให้ค่าเดียวกัน $q$ เป็นช่วงต่อเนื่อง $[l, r]$ โดย $r = \lfloor n / q \rfloor$</p>
+<div class="problem">
+  <div class="ptitle">CSES 1082 — Sum of Divisors</div>
+  <div class="src"><a href="https://cses.fi/problemset/task/1082" target="_blank" rel="noopener">ลิงก์โจทย์</a> · หา $\sum_{i=1}^{n}\sigma(i) \bmod 10^9+7$, $n \le 10^{12}$</div>
+  <p>สลับลำดับการรวม: ตัวหาร $d$ ปรากฏใน $\lfloor n/d \rfloor$ จำนวน จึงได้ $\sum_{d=1}^{n} d\cdot\lfloor n/d\rfloor$ ในแต่ละบล็อก $[l,r]$ ค่า $\lfloor n/d\rfloor = q$ คงที่ ผลรวม $d$ คือ $\frac{(l+r)(r-l+1)}{2}$ — ต้องหาร 2 ภายใต้ mod จึงต้องใช้ inverse</p>
+<pre><code>mint sum_divisors(ll n) {
+    mint ans = <span class="n">0</span>;
+    <span class="k">for</span> (ll l = <span class="n">1</span>, r; l &lt;= n; l = r + <span class="n">1</span>) {
+        ll q = n / l;
+        r = n / q;                                     <span class="c">// i สุดท้ายที่ n/i == q</span>
+        mint s = mint(l + r) * mint(r - l + <span class="n">1</span>) / <span class="n">2</span>;     <span class="c">// mod ก่อนคูณ กัน overflow</span>
+        ans += s * q;
+    }
+    <span class="k">return</span> ans;
+}
+<span class="c">// n = 5 → 21</span></code></pre>
+</div>
+
+<h3 id="cp-cycle">5.6 ของที่วนเป็นคาบ / เดินบนวงกลม</h3>
+<p>สามข้อเท็จจริงที่ควรจำให้ขึ้นใจ:</p>
+<ol>
+<li>เริ่มที่ 0 บนวงกลม $N$ ช่อง เดินทีละ $K$ จะไปถึงได้เฉพาะช่องที่เป็น <b>พหุคูณของ $g=\gcd(K,N)$</b> และกลับมาที่เดิมหลัง $N/g$ ก้าว</li>
+<li>"อยู่ช่อง $T$ ได้ครั้งแรกเมื่อไหร่" = แก้ $Kt \equiv T \pmod N$ (ABC186 E)</li>
+<li>สองเหตุการณ์ที่มีคาบ $p, q$ จะตรงเฟสกันซ้ำทุก $\operatorname{lcm}(p,q)$ และ "ตรงกันครั้งแรก" คือ CRT (ABC193 E)</li>
+</ol>
+<div class="box tip"><span class="label">มุมมองที่ช่วยได้มาก</span>
+ถ้าโจทย์จำลองกระบวนการที่วนไปเรื่อย ๆ (สลับตำแหน่ง, หมุน, permutation) ให้แยกเป็น <b>cycle</b> หาคาบของแต่ละ cycle แล้วใช้ CRT/lcm รวม เช่น "permutation ต้องทำซ้ำกี่ครั้งถึงกลับมาเหมือนเดิม" = lcm ของความยาว cycle ทั้งหมด (ระวัง lcm ใหญ่: เก็บเป็นการแยกตัวประกอบเฉพาะ แล้วค่อย mod)
+</div>
+
+<h3 id="cp-composite">5.7 เมื่อ mod ไม่ใช่จำนวนเฉพาะ หรือใหญ่มาก</h3>
+<table>
+<tr><th>ปัญหา</th><th>วิธีแก้</th></tr>
+<tr><td>$m$ ประกอบ ต้องหาร</td><td>inverse มีเฉพาะ $\gcd(a,m)=1$ ใช้ exgcd หรือแยก $m = \prod p_i^{e_i}$ คำนวณแยกแล้ว CRT รวม</td></tr>
+<tr><td>$\binom{n}{k} \bmod m$, $m$ ประกอบ</td><td>Lucas ต่อ prime + CRT (ตัวอย่าง 6 ในหัวข้อ 4)</td></tr>
+<tr><td>$m \approx 10^{18}$</td><td>คูณด้วย <code>(__int128)a * b % m</code></td></tr>
+<tr><td>convolution mod $10^9+7$</td><td>NTT 3 primes (998244353, 167772161, 469762049) + Garner; ACL: <code>atcoder::convolution_ll</code> ใช้แนวคิดนี้</td></tr>
+<tr><td>string hashing</td><td>ใช้ 2 mod (เช่น $10^9+7$ และ $998244353$) หรือ mod $2^{61}-1$ — <b>ห้ามใช้ mod $2^{64}$ (unsigned overflow)</b> เพราะมี anti-hash test (Thue–Morse) บน Codeforces</td></tr>
+</table>
+
+<h3 id="cp-range">5.8 นับ $x\in[L,R]$ ที่ $(ax+b) \bmod m \in [lo, hi]$ — floor sum ในการแข่ง</h3>
+<p>ฟังก์ชันพร้อมใช้ (ต่อยอดจากเทคนิค (ข) ในหัวข้อ 3.4) ตอบใน $O(\log m)$ แม้ช่วงยาว $10^{18}$:</p>
+<pre><code><span class="c">// จำนวน x ใน [L, R] ที่ (a*x + b) mod m อยู่ใน [lo, hi]   (0 ≤ lo ≤ hi &lt; m)</span>
+ll count_range(ll L, ll R, ll a, ll b, ll m, ll lo, ll hi) {
+    ll n = R - L + <span class="n">1</span>;
+    a = ((a % m) + m) % m;
+    ll b0 = (ll)(((__int128)a * L + b) % m + m) % m;     <span class="c">// แทน x = L + i</span>
+    <span class="k">auto</span> ge = [&amp;](ll c) {                                <span class="c">// #{ i : (a*i + b0) mod m &gt;= c }</span>
+        <span class="k">return</span> floor_sum(n, m, a, b0 + m - c) - floor_sum(n, m, a, b0);
+    };
+    <span class="k">return</span> ge(lo) - ge(hi + <span class="n">1</span>);
+}</code></pre>
+<p>รูปแบบโจทย์ที่ใช้ได้:</p>
+<ul>
+<li>"มีกี่วันที่ช่วงเวลาที่ $ax \bmod m$ อยู่ในช่วงทำงาน" (นาฬิกา, ตารางเวลาที่เลื่อนทีละ $a$)</li>
+<li>"มีกี่ $x$ ที่บิตที่ $k$ ของ $ax+b$ เป็น 1" = เศษ mod $2^{k+1}$ อยู่ใน $[2^k, 2^{k+1})$</li>
+<li>"$\lfloor (ax+b)/m \rfloor$ เป็นเลขคู่กี่ตัว" = เศษ mod $2m$ อยู่ใน $[0, m)$</li>
+<li>ใช้เป็น oracle ใน binary search: "หา $x$ น้อยสุดที่มีตัวที่เศษ $\le c$ อย่างน้อย $k$ ตัว"</li>
+</ul>
+
+<h3 id="cp-bugs">5.9 Checklist ก่อนกดส่ง</h3>
+<ul class="plist">
+<li>☐ ทุกการลบ: บวก MOD กลับก่อน mod แล้วหรือยัง (หรือใช้ modint)</li>
+<li>☐ คูณสองค่าที่ mod แล้ว: ใช้ <code>long long</code> (MOD ~1e9) หรือ <code>__int128</code> (MOD ~1e18)</li>
+<li>☐ Input ใหญ่ถึง $10^{18}$: mod ก่อนเอาไปคูณ (<code>mint(l + r)</code> ไม่ใช่ <code>mint((l + r) * (r - l + 1))</code>)</li>
+<li>☐ หาร: ตัวหารเป็น 0 mod p ได้หรือไม่? MOD เป็นจำนวนเฉพาะจริงหรือไม่?</li>
+<li>☐ เลขชี้กำลัง: mod ด้วย $p-1$ ไม่ใช่ $p$ และระวังเคส $a \equiv 0$</li>
+<li>☐ CRT: lcm พอดี 64 บิตหรือไม่? ถ้าไม่ ใช้ Garner หรือตรวจ overflow</li>
+<li>☐ floor sum: ข้อจำกัด $n, m \le 10^9$; ถ้า $a, b$ ติดลบใช้เวอร์ชันที่รองรับ</li>
+<li>☐ คำตอบสุดท้ายเป็นค่าใน $[0, \text{MOD})$ ไม่ใช่ค่าติดลบ</li>
+</ul>
+
+<!-- ============ 6. PRACTICE ============ -->
+<h2 id="practice"><span class="num">6</span>โจทย์ฝึกเพิ่ม (เรียงจากง่ายไปยาก)</h2>
+<h4>Modular arithmetic</h4>
+<ul class="plist">
+<li><a href="https://cses.fi/problemset/task/1095" target="_blank" rel="noopener">CSES 1095 — Exponentiation</a> <span class="tag">binpow</span></li>
+<li><a href="https://cses.fi/problemset/task/1712" target="_blank" rel="noopener">CSES 1712 — Exponentiation II</a> <span class="tag">Fermat: ลดเลขชี้กำลัง mod p−1</span></li>
+<li><a href="https://cses.fi/problemset/task/1079" target="_blank" rel="noopener">CSES 1079 — Binomial Coefficients</a> <span class="tag">fact + inverse</span></li>
+<li><a href="https://cses.fi/problemset/task/1715" target="_blank" rel="noopener">CSES 1715 — Creating Strings II</a> <span class="tag">multinomial mod p</span></li>
+<li><a href="https://cses.fi/problemset/task/1082" target="_blank" rel="noopener">CSES 1082 — Sum of Divisors</a> <span class="tag">ต้องใช้ inverse ของ 2</span></li>
+</ul>
+<h4>CRT</h4>
+<ul class="plist">
+<li><a href="https://open.kattis.com/problems/generalchineseremainder" target="_blank" rel="noopener">Kattis — General Chinese Remainder</a> <span class="tag">template ตรง ๆ</span></li>
+<li><a href="https://atcoder.jp/contests/abc186/tasks/abc186_e" target="_blank" rel="noopener">ABC186 E — Throne</a> <span class="tag">linear congruence</span></li>
+<li><a href="https://atcoder.jp/contests/abc193/tasks/abc193_e" target="_blank" rel="noopener">ABC193 E — Oversleeping</a> <span class="tag">CRT ไม่ coprime</span></li>
+<li><a href="https://codeforces.com/problemset/problem/687/B" target="_blank" rel="noopener">CF 687B — Remainders Game</a> <span class="tag">แนวคิด CRT/lcm</span></li>
+<li><a href="https://codeforces.com/problemset/problem/338/D" target="_blank" rel="noopener">CF 338D — GCD Table</a> <span class="tag">CRT + lcm ใหญ่</span></li>
+</ul>
+<h4>Floor sum</h4>
+<ul class="plist">
+<li><a href="https://atcoder.jp/contests/practice2/tasks/practice2_c" target="_blank" rel="noopener">ACL Practice C — Floor Sum</a> <span class="tag">template</span></li>
+<li><a href="https://judge.yosupo.jp/problem/sum_of_floor_of_linear" target="_blank" rel="noopener">Library Checker — Sum of Floor of Linear</a> <span class="tag">มี a, b ติดลบ</span></li>
+<li><a href="https://atcoder.jp/contests/abc283/tasks/abc283_h" target="_blank" rel="noopener">ABC283 Ex — Popcount Sum</a> <span class="tag">bit trick</span></li>
+</ul>
+
+<!-- ============ 6. CHEAT SHEET ============ -->
+<h2 id="cheat"><span class="num">7</span>Cheat sheet</h2>
+<table>
+<tr><th>อยากได้</th><th>เครื่องมือ</th><th>เวลา</th></tr>
+<tr><td>$a^e \bmod m$</td><td>binpow</td><td>$O(\log e)$</td></tr>
+<tr><td>$a^{-1} \bmod p$ (p เฉพาะ)</td><td>$a^{p-2}$</td><td>$O(\log p)$</td></tr>
+<tr><td>$a^{-1} \bmod m$ (ทั่วไป)</td><td>exgcd, ต้อง $\gcd=1$</td><td>$O(\log m)$</td></tr>
+<tr><td>inverse ของ $1..n$</td><td><code>inv[i] = -(m/i)*inv[m%i]</code></td><td>$O(n)$</td></tr>
+<tr><td>$ax\equiv b \pmod m$</td><td>หาร $g$ แล้วคูณ inverse</td><td>$O(\log m)$</td></tr>
+<tr><td>ระบบ $x\equiv r_i \pmod{m_i}$</td><td>รวมทีละคู่ด้วย exgcd</td><td>$O(k\log)$</td></tr>
+<tr><td>CRT ที่คำตอบใหญ่มาก</td><td>Garner</td><td>$O(k^2)$</td></tr>
+<tr><td>$\sum \lfloor (ai+b)/m \rfloor$</td><td>floor_sum</td><td>$O(\log m)$</td></tr>
+<tr><td>$\sum (ai+b)\bmod m$</td><td>ผลรวมเลขคณิต − $m\cdot$floor_sum</td><td>$O(\log m)$</td></tr>
+<tr><td>นับ $(ai+b)\bmod m \ge c$</td><td>$f(\dots,b+m-c) - f(\dots,b)$</td><td>$O(\log m)$</td></tr>
+</table>
+
+<h2 id="refs">แหล่งอ้างอิง</h2>
+<ul class="plist">
+<li><a href="https://cp-algorithms.com/algebra/chinese-remainder-theorem.html" target="_blank" rel="noopener">cp-algorithms — Chinese Remainder Theorem</a> (เนื้อหาหลักของหัวข้อ 2: ทฤษฎีบท, การรวมสมการ, Garner, mixed radix)</li>
+<li><a href="https://cp-algorithms.com/algebra/garners-algorithm.html" target="_blank" rel="noopener">cp-algorithms — Garner's algorithm</a></li>
+<li><a href="https://cp-algorithms.com/algebra/extended-euclid-algorithm.html" target="_blank" rel="noopener">cp-algorithms — Extended Euclidean Algorithm</a> · <a href="https://cp-algorithms.com/algebra/module-inverse.html" target="_blank" rel="noopener">Modular Inverse</a> · <a href="https://cp-algorithms.com/algebra/linear_congruence_equation.html" target="_blank" rel="noopener">Linear Congruence</a></li>
+<li><a href="https://github.com/atcoder/ac-library/blob/master/document_en/math.md" target="_blank" rel="noopener">AtCoder Library — math (crt, floor_sum)</a></li>
+<li><a href="https://cp-algorithms.com/algebra/binary-exp.html" target="_blank" rel="noopener">cp-algorithms — Binary Exponentiation</a></li>
+</ul>
+</main>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.renderMathInElement) {
+    renderMathInElement(document.body, {
+      delimiters: [{left: "$$", right: "$$", display: true}, {left: "$", right: "$", display: false}],
+      ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+      throwOnError: false
+    });
+  }
+});
+
+// ---------- BigInt helpers ----------
+const B = x => BigInt(x);
+const mod = (a, m) => ((a % m) + m) % m;
+function exgcd(a, b) { // returns [g, x, y]
+  let [or, r] = [a, b], [ox, x] = [1n, 0n], [oy, y] = [0n, 1n];
+  while (r !== 0n) {
+    const q = or / r;
+    [or, r] = [r, or - q * r];
+    [ox, x] = [x, ox - q * x];
+    [oy, y] = [y, oy - q * y];
+  }
+  return [or, ox, oy];
+}
+
+function runCRT() {
+  const out = document.getElementById("crtOut");
+  try {
+    const lines = document.getElementById("crtIn").value.trim().split(/\n+/).filter(s => s.trim());
+    let R = 0n, M = 1n, log = [];
+    for (const line of lines) {
+      const [rs, ms] = line.trim().split(/\s+/);
+      const m = B(ms), r = mod(B(rs), m);
+      if (m <= 0n) throw new Error("modulus ต้องเป็นบวก");
+      const [g, p] = exgcd(M, m);
+      if ((r - R) % g !== 0n) {
+        log.push(`รวม x≡${R} (mod ${M}) กับ x≡${r} (mod ${m}): gcd=${g} ไม่หาร ${r - R}  → ไม่มีคำตอบ`);
+        out.textContent = log.join("\n"); return;
+      }
+      const mg = m / g;
+      const t = mod(((r - R) / g) * p, mg);
+      const newR = R + M * t, newM = M * mg;
+      log.push(`รวม x≡${R} (mod ${M}) กับ x≡${r} (mod ${m}): gcd=${g}, t=${t} → x≡${mod(newR, newM)} (mod ${newM})`);
+      R = mod(newR, newM); M = newM;
+    }
+    log.push(`\nคำตอบ: x ≡ ${R} (mod ${M})`);
+    out.textContent = log.join("\n");
+  } catch (e) { out.textContent = "รูปแบบข้อมูลไม่ถูกต้อง: " + e.message; }
+}
+
+function floorDiv(a, m) { const q = a / m; return (a % m !== 0n && ((a < 0n) !== (m < 0n))) ? q - 1n : q; }
+
+function runFS() {
+  const out = document.getElementById("fsOut");
+  try {
+    let n = B(document.getElementById("fsn").value), m = B(document.getElementById("fsm").value),
+        a = B(document.getElementById("fsa").value), b = B(document.getElementById("fsb").value);
+    if (n < 0n || m <= 0n) throw new Error("ต้องการ n ≥ 0 และ m ≥ 1");
+    const n0 = n, m0 = m, a0 = a, b0 = b;
+    let ans = 0n, log = [];
+    if (a < 0n) { const a2 = mod(a, m); ans -= n * (n - 1n) / 2n * ((a2 - a) / m); a = a2; }
+    if (b < 0n) { const b2 = mod(b, m); ans -= n * ((b2 - b) / m); b = b2; }
+    let round = 1;
+    while (true) {
+      let line = `รอบ ${round++}: (n=${n}, m=${m}, a=${a}, b=${b})`;
+      if (a >= m) { const add = n * (n - 1n) / 2n * (a / m); ans += add; line += `  ลด a: +${add}`; a %= m; }
+      if (b >= m) { const add = n * (b / m); ans += add; line += `  ลด b: +${add}`; b %= m; }
+      const y = a * n + b;
+      if (y < m) { log.push(line + `  y_max=${y} < m → หยุด`); break; }
+      line += `  y_max=${y} → n'=${y / m}, b'=${y % m}, สลับ m↔a`;
+      log.push(line);
+      n = y / m; b = y % m; [m, a] = [a, m];
+    }
+    log.push(`\nf(${n0}, ${m0}, ${a0}, ${b0}) = ${ans}`);
+    if (n0 <= 1000000n) {
+      let s = 0n;
+      for (let i = 0n; i < n0; i++) s += floorDiv(a0 * i + b0, m0);
+      log.push(`brute force = ${s} ${s === ans ? "✓ ตรงกัน" : "✗ ไม่ตรง"}`);
+    }
+    out.textContent = log.join("\n");
+  } catch (e) { out.textContent = "ข้อมูลไม่ถูกต้อง: " + e.message; }
+}
+</script>
+</body>
+</html>
